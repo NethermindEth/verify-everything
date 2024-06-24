@@ -1,8 +1,10 @@
+use core::array::ArrayTrait;
+use core::traits::Into;
 use core::box::BoxTrait;
 use core::option::OptionTrait;
 use core::array::SpanTrait;
 
-use plonky2_verifier::fields::goldilocks::Goldilocks;
+use plonky2_verifier::fields::goldilocks::{Goldilocks, goldilocks};
 use core::array::Span;
 
 pub const SPONGE_RATE: usize = 8;
@@ -122,12 +124,124 @@ pub const ALL_ROUND_CONSTANTS: [u64; MAX_WIDTH * N_ROUNDS]  = [
 ];
 
 
+#[derive(Clone, Drop, Debug)]
+pub struct PoseidonState {
+    pub s0: Goldilocks,
+    pub s1: Goldilocks,
+    pub s2: Goldilocks,
+    pub s3: Goldilocks,
+    pub s4: Goldilocks,
+    pub s5: Goldilocks,
+    pub s6: Goldilocks,
+    pub s7: Goldilocks,
+    pub s8: Goldilocks,
+    pub s9: Goldilocks,
+    pub s10: Goldilocks,
+    pub s11: Goldilocks,
+}
 
+#[derive(Clone, Drop, Debug)]
+pub struct PoseidonPermutation {
+    pub state: PoseidonState,
+}
 
-pub struct Poseidon {
-    pub rate: u8,
-    pub width: u8,
-    pub MDS_MATRIX_CIRC: [u64; SPONGE_WIDTH],
+trait Permuter {
+    fn permute(self: PoseidonPermutation) -> PoseidonPermutation;
+    fn default() -> PoseidonPermutation;
+    fn new(elts: Span<Goldilocks>) -> PoseidonPermutation;
+    fn set_elt(self: PoseidonPermutation, elt: Goldilocks, idx: usize) -> PoseidonPermutation;
+    fn set_from_slice(self: PoseidonPermutation, slice: Span<Goldilocks>, start_idx: usize) -> PoseidonPermutation;
+    fn squeeze(self: PoseidonPermutation) -> Span<Goldilocks>;
+}
+
+impl PoseidonPermuter of Permuter {
+    fn default() -> PoseidonPermutation {
+        PoseidonPermutation {
+            state: PoseidonState {
+                s0: goldilocks(0),
+                s1: goldilocks(0),
+                s2: goldilocks(0),
+                s3: goldilocks(0),
+                s4: goldilocks(0),
+                s5: goldilocks(0),
+                s6: goldilocks(0),
+                s7: goldilocks(0),
+                s8: goldilocks(0),
+                s9: goldilocks(0),
+                s10: goldilocks(0),
+                s11: goldilocks(0),
+            }
+        }
+    }
+
+    fn new(elts: Span<Goldilocks>) -> PoseidonPermutation {
+        PoseidonPermutation {
+            state: PoseidonState {
+                s0: *elts.get(0).unwrap().unbox(),
+                s1: *elts.get(1).unwrap().unbox(),
+                s2: *elts.get(2).unwrap().unbox(),
+                s3: *elts.get(3).unwrap().unbox(),
+                s4: *elts.get(4).unwrap().unbox(),
+                s5: *elts.get(5).unwrap().unbox(),
+                s6: *elts.get(6).unwrap().unbox(),
+                s7: *elts.get(7).unwrap().unbox(),
+                s8: *elts.get(8).unwrap().unbox(),
+                s9: *elts.get(9).unwrap().unbox(),
+                s10: *elts.get(10).unwrap().unbox(),
+                s11: *elts.get(11).unwrap().unbox(),
+            }
+        }
+    }
+
+    fn set_elt(self: PoseidonPermutation, elt: Goldilocks, idx: usize) -> PoseidonPermutation {
+        match idx {
+            0 => PoseidonPermutation { state: PoseidonState { s0: elt, ..self.state } },
+            1 => PoseidonPermutation { state: PoseidonState { s1: elt, ..self.state } },
+            2 => PoseidonPermutation { state: PoseidonState { s2: elt, ..self.state } },
+            3 => PoseidonPermutation { state: PoseidonState { s3: elt, ..self.state } },
+            4 => PoseidonPermutation { state: PoseidonState { s4: elt, ..self.state } },
+            5 => PoseidonPermutation { state: PoseidonState { s5: elt, ..self.state } },
+            6 => PoseidonPermutation { state: PoseidonState { s6: elt, ..self.state } },
+            7 => PoseidonPermutation { state: PoseidonState { s7: elt, ..self.state } },
+            8 => PoseidonPermutation { state: PoseidonState { s8: elt, ..self.state } },
+            9 => PoseidonPermutation { state: PoseidonState { s9: elt, ..self.state } },
+            10 => PoseidonPermutation { state: PoseidonState { s10: elt, ..self.state } },
+            11 => PoseidonPermutation { state: PoseidonState { s11: elt, ..self.state } },
+            _ => self,
+        }
+    }
+
+    fn set_from_slice(self: PoseidonPermutation, slice: Span<Goldilocks>, start_idx: usize) -> PoseidonPermutation {
+        let mut new_perm = self;
+        let len = slice.len();        
+        let mut idx = start_idx;
+        loop {
+            if idx >= len {
+                break;
+            }
+            new_perm = new_perm.set_elt(*slice.at(idx), idx);
+            idx += 1;
+        };
+        new_perm
+    }
+
+    fn permute(self: PoseidonPermutation) -> PoseidonPermutation {
+        self
+    }
+
+    fn squeeze(self: PoseidonPermutation) -> Span<Goldilocks> {
+        array![
+            self.state.s0,
+            self.state.s1,
+            self.state.s2,
+            self.state.s3,
+            self.state.s4,
+            self.state.s5,
+            self.state.s6,
+            self.state.s7,
+        ].span()
+    }
+
 }
 
 pub trait PoseidonTrait {
@@ -144,32 +258,53 @@ pub trait PoseidonTrait {
 }
 
 
+fn min(a: usize, b: usize) -> usize {
+    if a < b {
+        a
+    } else {
+        b
+    }
+}
+
+fn max(a: usize, b: usize) -> usize {
+    if a > b {
+        a
+    } else {
+        b
+    }
+}
+
 pub fn hash_n_to_m_no_pad(
     inputs: Span<Goldilocks>,
     num_outputs: usize,
-) {
-    // let mut perm = P::new(core::iter::repeat(F::ZERO));
+)-> Span<Goldilocks>{
+    let mut perm = Permuter::default();
+            
+    // Absorb all input chunks.
+    let mut chunk_start_idx = 0;
+    loop {
+        if (chunk_start_idx >= inputs.len()) {
+            break;
+        }
+        let chunk_end_idx = min(inputs.len(), SPONGE_RATE);
+        perm = perm.set_from_slice(inputs.slice(chunk_start_idx, chunk_end_idx), 0);
+        perm = perm.permute();
+        chunk_start_idx += SPONGE_RATE;
+    };
 
-//     println!("RATE: {}", P::RATE);
-//     println!("WIDTH: {}", P::WIDTH);
+    // Squeeze until we have the desired number of outputs.
+    let mut outputs = array![];
+    loop {
+        let squeezed = perm.clone().squeeze();
+        let remaining = num_outputs - outputs.len();
+        outputs.append_span(squeezed.slice(0, max(remaining, squeezed.len())));
 
-//     println!("perm: {:?}", perm);
+        if (outputs.len() >= num_outputs) {
+            break;
+        }
 
-//     // Absorb all input chunks.
-//     for input_chunk in inputs.chunks(P::RATE) {
-//         perm.set_from_slice(input_chunk, 0);
-//         perm.permute();
-//     }
+        perm = perm.permute();
+    };
 
-//     // Squeeze until we have the desired number of outputs.
-//     let mut outputs = Vec::new();
-//     loop {
-//         for &item in perm.squeeze() {
-//             outputs.push(item);
-//             if outputs.len() == num_outputs {
-//                 return outputs;
-//             }
-//         }
-//         perm.permute();
-//     }
+    outputs.span()
 }
