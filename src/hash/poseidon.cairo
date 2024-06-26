@@ -6,10 +6,13 @@ use core::array::SpanTrait;
 
 use plonky2_verifier::fields::goldilocks::{Goldilocks, goldilocks};
 use core::array::Span;
+use plonky2_verifier::hash::poseidon_state::{PoseidonState, PoseidonStateArray};
 
 pub const SPONGE_RATE: usize = 8;
 pub const SPONGE_CAPACITY: usize = 4;
 pub const SPONGE_WIDTH: usize = SPONGE_RATE + SPONGE_CAPACITY;
+
+
 
 // The number of full rounds and partial rounds is given by the
 // calc_round_numbers.py script. They happen to be the same for both
@@ -123,23 +126,6 @@ pub const ALL_ROUND_CONSTANTS: [u64; MAX_WIDTH * N_ROUNDS]  = [
     0x4543d9df5476d3cb, 0xf172d73e004fc90d, 0xdfd1c4febcc81238, 0xbc8dfb627fe558fc,
 ];
 
-
-#[derive(Clone, Drop, Debug)]
-pub struct PoseidonState {
-    pub s0: Goldilocks,
-    pub s1: Goldilocks,
-    pub s2: Goldilocks,
-    pub s3: Goldilocks,
-    pub s4: Goldilocks,
-    pub s5: Goldilocks,
-    pub s6: Goldilocks,
-    pub s7: Goldilocks,
-    pub s8: Goldilocks,
-    pub s9: Goldilocks,
-    pub s10: Goldilocks,
-    pub s11: Goldilocks,
-}
-
 #[derive(Clone, Drop, Debug)]
 pub struct PoseidonPermutation {
     pub state: PoseidonState,
@@ -154,61 +140,24 @@ trait Permuter {
     fn squeeze(self: PoseidonPermutation) -> Span<Goldilocks>;
 }
 
+
 impl PoseidonPermuter of Permuter {
     fn default() -> PoseidonPermutation {
         PoseidonPermutation {
-            state: PoseidonState {
-                s0: goldilocks(0),
-                s1: goldilocks(0),
-                s2: goldilocks(0),
-                s3: goldilocks(0),
-                s4: goldilocks(0),
-                s5: goldilocks(0),
-                s6: goldilocks(0),
-                s7: goldilocks(0),
-                s8: goldilocks(0),
-                s9: goldilocks(0),
-                s10: goldilocks(0),
-                s11: goldilocks(0),
-            }
+            state: PoseidonStateArray::default(),
         }
     }
 
     fn new(elts: Span<Goldilocks>) -> PoseidonPermutation {
         PoseidonPermutation {
-            state: PoseidonState {
-                s0: *elts.get(0).unwrap().unbox(),
-                s1: *elts.get(1).unwrap().unbox(),
-                s2: *elts.get(2).unwrap().unbox(),
-                s3: *elts.get(3).unwrap().unbox(),
-                s4: *elts.get(4).unwrap().unbox(),
-                s5: *elts.get(5).unwrap().unbox(),
-                s6: *elts.get(6).unwrap().unbox(),
-                s7: *elts.get(7).unwrap().unbox(),
-                s8: *elts.get(8).unwrap().unbox(),
-                s9: *elts.get(9).unwrap().unbox(),
-                s10: *elts.get(10).unwrap().unbox(),
-                s11: *elts.get(11).unwrap().unbox(),
-            }
+            state: PoseidonStateArray::new(elts),
         }
     }
 
     fn set_elt(self: PoseidonPermutation, elt: Goldilocks, idx: usize) -> PoseidonPermutation {
-        match idx {
-            0 => PoseidonPermutation { state: PoseidonState { s0: elt, ..self.state } },
-            1 => PoseidonPermutation { state: PoseidonState { s1: elt, ..self.state } },
-            2 => PoseidonPermutation { state: PoseidonState { s2: elt, ..self.state } },
-            3 => PoseidonPermutation { state: PoseidonState { s3: elt, ..self.state } },
-            4 => PoseidonPermutation { state: PoseidonState { s4: elt, ..self.state } },
-            5 => PoseidonPermutation { state: PoseidonState { s5: elt, ..self.state } },
-            6 => PoseidonPermutation { state: PoseidonState { s6: elt, ..self.state } },
-            7 => PoseidonPermutation { state: PoseidonState { s7: elt, ..self.state } },
-            8 => PoseidonPermutation { state: PoseidonState { s8: elt, ..self.state } },
-            9 => PoseidonPermutation { state: PoseidonState { s9: elt, ..self.state } },
-            10 => PoseidonPermutation { state: PoseidonState { s10: elt, ..self.state } },
-            11 => PoseidonPermutation { state: PoseidonState { s11: elt, ..self.state } },
-            _ => self,
-        }
+        let mut new_perm = self;
+        new_perm.state = new_perm.state.set(elt, idx);
+        new_perm
     }
 
     fn set_from_slice(self: PoseidonPermutation, slice: Span<Goldilocks>, start_idx: usize) -> PoseidonPermutation {
@@ -245,6 +194,7 @@ impl PoseidonPermuter of Permuter {
 }
 
 pub trait PoseidonTrait {
+    fn poseidon(input: PoseidonState) -> PoseidonState;
     fn full_rounds();
     fn constant_layer();
     fn sbox_layer();
