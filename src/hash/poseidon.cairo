@@ -241,7 +241,28 @@ impl PoseidonTrait of Poseidon {
 
     fn partial_rounds(ref state: PoseidonState, ref round_ctr: usize) {}
     
-    fn sbox_layer(ref state: PoseidonState) {}
+    fn sbox_layer(ref state: PoseidonState) {
+        let mut i = 0;
+        loop {
+            if (i >= 12) {
+                break;
+            }
+            if (i < SPONGE_WIDTH) {
+                state.set(i, PoseidonTrait::sbox_monomial(state.at(i)));
+            }
+
+            i += 1;
+        }
+    }
+
+    fn sbox_monomial(x: Goldilocks) -> Goldilocks {
+        // x |--> x^7
+        let x2 = x * x;
+        let x4 = x2 * x2;
+        let x3 = x * x2;
+        x3 * x4
+    }
+
     fn mds_layer(state: PoseidonState) -> PoseidonState {
         state
     }
@@ -316,7 +337,8 @@ pub fn hash_n_to_m_no_pad(
 
 #[cfg(test)]
 mod tests {
-    use super::{hash_n_to_m_no_pad, gl, PoseidonStateArray, PoseidonTrait};
+    use core::traits::Into;
+use super::{hash_n_to_m_no_pad, gl, PoseidonStateArray, PoseidonTrait};
 
     #[test]
     fn test_constant_layer() {
@@ -331,6 +353,35 @@ mod tests {
         ].span());
         PoseidonTrait::constant_layer(ref state, 0);
         assert_eq!(state, expected_result);
-    }   
+    }
+
+    #[test]
+    fn test_sbox_monomial() {
+        let x = gl(0x123456789abcdef0);
+        let y = PoseidonTrait::sbox_monomial(x);
+        assert_eq!(y, gl(11853639751010147186));
+    }
+
+    #[test]
+    fn test_sbox_layer() {
+        let mut state = PoseidonStateArray::default();
+        let mut i: usize = 0;
+        
+        loop {
+            if (i >= 12) {
+                break;
+            }
+            state.set(i, gl(i.into()));
+            i += 1;
+        };
+
+        let expected_result = PoseidonStateArray::new(array![
+            gl(0), gl(1), gl(128), gl(2187), gl(16384), gl(78125), gl(279936), 
+            gl(823543), gl(2097152), gl(4782969), gl(10000000), gl(19487171)
+        ].span());
+
+        PoseidonTrait::sbox_layer(ref state);
+        assert_eq!(state, expected_result);
+    }
 }
  
