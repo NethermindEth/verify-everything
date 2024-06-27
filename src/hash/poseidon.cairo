@@ -1,3 +1,4 @@
+use core::to_byte_array::FormatAsByteArray;
 use plonky2_verifier::fields::goldilocks::GoldilocksTrait;
 use plonky2_verifier::hash::poseidon_state::PoseidonStateArrarTrait;
 use core::array::ArrayTrait;
@@ -272,8 +273,33 @@ impl PoseidonTrait of Poseidon {
         x3 * x4
     }
 
-    fn mds_layer(state: PoseidonState) -> PoseidonState {
-        state
+    fn mds_layer(state_: PoseidonState) -> PoseidonState {
+        let mut result = PoseidonStateArray::default();
+        let mut state = ArrayTrait::<u64>::new();
+        let mut i = 0;
+        loop {
+            if (i >= SPONGE_WIDTH) {
+                break;
+            }
+            state.append(state_.at(i).inner);
+            i += 1;
+        };
+
+        let mut r = 0;
+        loop {
+            if (r >= 12) {
+                break;
+            }
+
+            if (r < SPONGE_WIDTH) {
+                let sum: u128 = PoseidonTrait::mds_row_shf(r, state.span());
+                result.set(r, GoldilocksTrait::reduce_u128(sum));
+            }
+
+            r += 1;
+        };
+
+        result
     }
 
     fn mds_row_shf(r: usize, v: Span<u64>) -> u128 {
@@ -367,7 +393,9 @@ pub fn hash_n_to_m_no_pad(
 
 #[cfg(test)]
 mod tests {
-    use core::traits::Into;
+    use core::traits::RemEq;
+use core::to_byte_array::FormatAsByteArray;
+use core::traits::Into;
 use super::{hash_n_to_m_no_pad, gl, PoseidonStateArray, PoseidonTrait};
 
     #[test]
@@ -421,4 +449,20 @@ use super::{hash_n_to_m_no_pad, gl, PoseidonStateArray, PoseidonTrait};
         let res = PoseidonTrait::mds_row_shf(r, v);
         assert_eq!(res, 1360);
     }
+
+    #[test]
+    fn test_mds_layer() {
+        let res = PoseidonTrait::mds_layer(PoseidonStateArray::new(array![
+            gl(0), gl(1), gl(128), gl(2187), gl(16384), gl(78125), gl(279936), 
+            gl(823543), gl(2097152), gl(4782969), gl(10000000), gl(19487171)
+        ].span()));
+        
+        let expected_result = PoseidonStateArray::new(array!
+            [gl(914231540), gl(1075416846), gl(855786472), gl(1020513242), 
+            gl(547603236), gl(616150402), gl(747427508), gl(449170434), 
+            gl(857254888), gl(1108558718), gl(656301516),gl( 768889774)].span());
+
+        assert_eq!(res, expected_result);
+    }
+
 }
