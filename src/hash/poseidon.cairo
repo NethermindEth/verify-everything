@@ -15,7 +15,6 @@ pub const SPONGE_CAPACITY: usize = 4;
 pub const SPONGE_WIDTH: usize = SPONGE_RATE + SPONGE_CAPACITY;
 
 
-
 // The number of full rounds and partial rounds is given by the
 // calc_round_numbers.py script. They happen to be the same for both
 // width 8 and width 12 with s-box x^7.
@@ -27,6 +26,16 @@ pub(crate) const N_FULL_ROUNDS_TOTAL: usize = 2 * HALF_N_FULL_ROUNDS;
 pub const N_PARTIAL_ROUNDS: usize = 22;
 pub const N_ROUNDS: usize = N_FULL_ROUNDS_TOTAL + N_PARTIAL_ROUNDS;
 const MAX_WIDTH: usize = 12; // we only have width 8 and 12, and 12 is bigger. :)
+
+fn MDS_MATRIX_CIRC(idx: usize) -> u64 {
+    let mds_matrix_circ = array![17, 15, 41, 16, 2, 28, 13, 13, 39, 18, 34, 20];
+    *mds_matrix_circ.get(idx).unwrap().unbox()
+}
+
+fn MDS_MATRIX_DIAG(idx: usize) -> u64 {
+    let mds_matrix_diag = array![8, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0];
+    *mds_matrix_diag.get(idx).unwrap().unbox()
+}
 
 fn ALL_ROUND_CONSTANTS(idx: usize) -> u64 { 
     let consts = array![
@@ -266,6 +275,27 @@ impl PoseidonTrait of Poseidon {
     fn mds_layer(state: PoseidonState) -> PoseidonState {
         state
     }
+
+    fn mds_row_shf(r: usize, v: Span<u64>) -> u128 {
+        let mut res = 0;
+        let mut i = 0;
+        loop {
+            if (i >= 12) {
+                break;
+            }
+            if i < SPONGE_WIDTH {
+                let lhs: u128 = (*v.at((i+r) % SPONGE_WIDTH)).into();
+                let rhs: u128 = MDS_MATRIX_CIRC(i).into();
+                res += lhs * rhs;
+            }
+            i += 1;
+        };
+        let lhs: u128 = (*v.at(r)).into();
+        let rhs: u128 = MDS_MATRIX_DIAG(r).into();
+        res += lhs * rhs;
+
+        res
+    }
 }
 
 pub trait PoseidonTraittmp {
@@ -383,5 +413,12 @@ use super::{hash_n_to_m_no_pad, gl, PoseidonStateArray, PoseidonTrait};
         PoseidonTrait::sbox_layer(ref state);
         assert_eq!(state, expected_result);
     }
+
+    #[test]
+    fn test_mds_row_shf() {
+        let v = array![0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11].span();
+        let r = 2;
+        let res = PoseidonTrait::mds_row_shf(r, v);
+        assert_eq!(res, 1360);
+    }
 }
- 
