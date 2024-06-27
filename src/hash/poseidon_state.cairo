@@ -1,4 +1,4 @@
-use plonky2_verifier::fields::goldilocks::{Goldilocks, goldilocks};
+use plonky2_verifier::fields::goldilocks::{Goldilocks, gl};
 
 #[derive(Clone, Drop, Debug)]
 pub struct PoseidonState {
@@ -16,22 +16,55 @@ pub struct PoseidonState {
     pub s11: Goldilocks,
 }
 
+impl PoseidonStateEq of core::traits::PartialEq<PoseidonState> {
+    fn eq(lhs: @PoseidonState, rhs: @PoseidonState) -> bool {
+        lhs.s0 == rhs.s0 &&
+        lhs.s1 == rhs.s1 &&
+        lhs.s2 == rhs.s2 &&
+        lhs.s3 == rhs.s3 &&
+        lhs.s4 == rhs.s4 &&
+        lhs.s5 == rhs.s5 &&
+        lhs.s6 == rhs.s6 &&
+        lhs.s7 == rhs.s7 &&
+        lhs.s8 == rhs.s8 &&
+        lhs.s9 == rhs.s9 &&
+        lhs.s10 == rhs.s10 &&
+        lhs.s11 == rhs.s11
+    }
+
+    fn ne(lhs: @PoseidonState, rhs: @PoseidonState) -> bool {
+        lhs.s0 != rhs.s0 ||
+        lhs.s1 != rhs.s1 ||
+        lhs.s2 != rhs.s2 ||
+        lhs.s3 != rhs.s3 ||
+        lhs.s4 != rhs.s4 ||
+        lhs.s5 != rhs.s5 ||
+        lhs.s6 != rhs.s6 ||
+        lhs.s7 != rhs.s7 ||
+        lhs.s8 != rhs.s8 ||
+        lhs.s9 != rhs.s9 ||
+        lhs.s10 != rhs.s10 ||
+        lhs.s11 != rhs.s11
+    }
+
+}
+
 #[generate_trait]
 pub impl PoseidonStateArray of PoseidonStateArrarTrait  {
     fn default() -> PoseidonState {
         PoseidonState {
-            s0: goldilocks(0),
-            s1: goldilocks(0),
-            s2: goldilocks(0),
-            s3: goldilocks(0),
-            s4: goldilocks(0),
-            s5: goldilocks(0),
-            s6: goldilocks(0),
-            s7: goldilocks(0),
-            s8: goldilocks(0),
-            s9: goldilocks(0),
-            s10: goldilocks(0),
-            s11: goldilocks(0),
+            s0: gl(0),
+            s1: gl(0),
+            s2: gl(0),
+            s3: gl(0),
+            s4: gl(0),
+            s5: gl(0),
+            s6: gl(0),
+            s7: gl(0),
+            s8: gl(0),
+            s9: gl(0),
+            s10: gl(0),
+            s11: gl(0),
         }
     }
 
@@ -66,11 +99,11 @@ pub impl PoseidonStateArray of PoseidonStateArrarTrait  {
             9 => *self.s9,
             10 => *self.s10,
             11 => *self.s11,
-            _ => goldilocks(0),
+            _ => gl(0),
         }
     }
 
-    fn set(ref self: PoseidonState,  elt: Goldilocks, idx: usize) {
+    fn set(ref self: PoseidonState, idx: usize, elt: Goldilocks,) {
         match idx {
             0 => self.s0 = elt,
             1 => self.s1 = elt,

@@ -46,6 +46,7 @@ pub impl GoldilocksMul of core::traits::Mul<Goldilocks> {
         GoldilocksImpl::reduce_u128(core::integer::u64_wide_mul(lhs.inner, rhs.inner))
     }
 }
+
 pub impl M31Zero of core::num::traits::Zero<Goldilocks> {
     fn zero() -> Goldilocks {
         Goldilocks { inner: 0 }
@@ -57,6 +58,8 @@ pub impl M31Zero of core::num::traits::Zero<Goldilocks> {
         *self.inner != 0
     }
 }
+
+
 pub impl M31One of core::num::traits::One<Goldilocks> {
     fn one() -> Goldilocks {
         Goldilocks { inner: 1 }

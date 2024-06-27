@@ -1,10 +1,12 @@
+use plonky2_verifier::fields::goldilocks::GoldilocksTrait;
+use plonky2_verifier::hash::poseidon_state::PoseidonStateArrarTrait;
 use core::array::ArrayTrait;
 use core::traits::Into;
 use core::box::BoxTrait;
 use core::option::OptionTrait;
 use core::array::SpanTrait;
 
-use plonky2_verifier::fields::goldilocks::{Goldilocks, goldilocks};
+use plonky2_verifier::fields::goldilocks::{Goldilocks, gl};
 use core::array::Span;
 use plonky2_verifier::hash::poseidon_state::{PoseidonState, PoseidonStateArray};
 
@@ -26,7 +28,8 @@ pub const N_PARTIAL_ROUNDS: usize = 22;
 pub const N_ROUNDS: usize = N_FULL_ROUNDS_TOTAL + N_PARTIAL_ROUNDS;
 const MAX_WIDTH: usize = 12; // we only have width 8 and 12, and 12 is bigger. :)
 
-pub const ALL_ROUND_CONSTANTS: [u64; MAX_WIDTH * N_ROUNDS]  = [
+fn ALL_ROUND_CONSTANTS(idx: usize) -> u64 { 
+    let consts = array![
     // WARNING: The AVX2 Goldilocks specialization relies on all round constants being in
     // 0..0xfffeeac900011537. If these constants are randomly regenerated, there is a ~.6% chance
     // that this condition will no longer hold.
@@ -126,6 +129,10 @@ pub const ALL_ROUND_CONSTANTS: [u64; MAX_WIDTH * N_ROUNDS]  = [
     0x4543d9df5476d3cb, 0xf172d73e004fc90d, 0xdfd1c4febcc81238, 0xbc8dfb627fe558fc,
 ];
 
+    *consts.get(idx).unwrap().unbox()
+}
+
+
 #[derive(Clone, Drop, Debug)]
 pub struct PoseidonPermutation {
     pub state: PoseidonState,
@@ -155,7 +162,7 @@ impl PoseidonPermuter of Permuter {
     }
 
     fn set_elt(ref self: PoseidonPermutation, elt: Goldilocks, idx: usize) {
-        self.state.set(elt, idx);
+        self.state.set(idx, elt);
     }
 
     fn set_from_slice(ref self: PoseidonPermutation, slice: Span<Goldilocks>, start_idx: usize) {
@@ -189,15 +196,66 @@ impl PoseidonPermuter of Permuter {
 
 }
 
-pub trait PoseidonTrait {
-    fn poseidon(input: PoseidonState) -> PoseidonState;
-    fn full_rounds();
+#[generate_trait]
+impl PoseidonTrait of Poseidon {
+    fn poseidon(input: PoseidonState) -> PoseidonState {
+        let mut state = input;
+        let mut round_ctr = 0;
+
+        PoseidonTrait::full_rounds(ref state, ref round_ctr);
+        PoseidonTrait::partial_rounds(ref state, ref round_ctr);
+        PoseidonTrait::full_rounds(ref state, ref round_ctr);
+
+        state
+    }
+
+    fn full_rounds(ref state: PoseidonState, ref round_ctr: usize) {
+        let mut i = 0;
+        loop {
+            if (i >= HALF_N_FULL_ROUNDS) {
+                break;
+            }
+            PoseidonTrait::constant_layer(ref state, round_ctr);
+            PoseidonTrait::sbox_layer(ref state);
+            state = PoseidonTrait::mds_layer(state);
+            round_ctr += 1;
+            i += 1;
+        }
+    }
+
+    fn constant_layer(ref state: PoseidonState, round_ctr: usize) {
+        let mut i = 0;
+        loop {
+            if (i >= 12) {
+                break;
+            }
+
+            if (i < SPONGE_WIDTH) {
+                let round_constant = ALL_ROUND_CONSTANTS(i + SPONGE_WIDTH * round_ctr);
+                state.set(i, state.at(i) + gl(round_constant));
+            }
+
+            i += 1;
+        }
+    }
+
+    fn partial_rounds(ref state: PoseidonState, ref round_ctr: usize) {}
+    
+    fn sbox_layer(ref state: PoseidonState) {}
+    fn mds_layer(state: PoseidonState) -> PoseidonState {
+        state
+    }
+}
+
+pub trait PoseidonTraittmp {
+    fn poseidon(state: PoseidonState) -> PoseidonState;
+    fn full_rounds(ref state: PoseidonState, ref round_ctr: usize);
+    fn partial_rounds(ref state: PoseidonState, ref round_ctr: usize);
     fn constant_layer();
     fn sbox_layer();
     fn mds_layer();
     fn sbox_monomial();
     fn mds_row_shf();
-    fn partial_rounds();
     fn partial_first_constant_layer();
     fn mds_partial_layer_init();    
     fn mds_partial_layer_fast();   
@@ -254,3 +312,25 @@ pub fn hash_n_to_m_no_pad(
 
     outputs.span()
 }
+
+
+#[cfg(test)]
+mod tests {
+    use super::{hash_n_to_m_no_pad, gl, PoseidonStateArray, PoseidonTrait};
+
+    #[test]
+    fn test_constant_layer() {
+        let mut state = PoseidonStateArray::default();
+        let expected_result = PoseidonStateArray::new(array![
+            gl(13080132714287612933), gl(8594738767457295063), 
+            gl(12896916465481390516), gl(1109962092811921367), 
+            gl(16216730422861946898), gl(10137062673499593713), 
+            gl(15292064466732465823), gl(17255573294985989181), 
+            gl(14827154241873003558), gl(2846171647972703231), 
+            gl(16246264663680317601), gl(14214208087951879286)
+        ].span());
+        PoseidonTrait::constant_layer(ref state, 0);
+        assert_eq!(state, expected_result);
+    }   
+}
+ 
