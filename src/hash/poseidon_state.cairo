@@ -18,39 +18,38 @@ pub struct PoseidonState {
 
 impl PoseidonStateEq of core::traits::PartialEq<PoseidonState> {
     fn eq(lhs: @PoseidonState, rhs: @PoseidonState) -> bool {
-        lhs.s0 == rhs.s0 &&
-        lhs.s1 == rhs.s1 &&
-        lhs.s2 == rhs.s2 &&
-        lhs.s3 == rhs.s3 &&
-        lhs.s4 == rhs.s4 &&
-        lhs.s5 == rhs.s5 &&
-        lhs.s6 == rhs.s6 &&
-        lhs.s7 == rhs.s7 &&
-        lhs.s8 == rhs.s8 &&
-        lhs.s9 == rhs.s9 &&
-        lhs.s10 == rhs.s10 &&
-        lhs.s11 == rhs.s11
+        lhs.s0 == rhs.s0
+            && lhs.s1 == rhs.s1
+            && lhs.s2 == rhs.s2
+            && lhs.s3 == rhs.s3
+            && lhs.s4 == rhs.s4
+            && lhs.s5 == rhs.s5
+            && lhs.s6 == rhs.s6
+            && lhs.s7 == rhs.s7
+            && lhs.s8 == rhs.s8
+            && lhs.s9 == rhs.s9
+            && lhs.s10 == rhs.s10
+            && lhs.s11 == rhs.s11
     }
 
     fn ne(lhs: @PoseidonState, rhs: @PoseidonState) -> bool {
-        lhs.s0 != rhs.s0 ||
-        lhs.s1 != rhs.s1 ||
-        lhs.s2 != rhs.s2 ||
-        lhs.s3 != rhs.s3 ||
-        lhs.s4 != rhs.s4 ||
-        lhs.s5 != rhs.s5 ||
-        lhs.s6 != rhs.s6 ||
-        lhs.s7 != rhs.s7 ||
-        lhs.s8 != rhs.s8 ||
-        lhs.s9 != rhs.s9 ||
-        lhs.s10 != rhs.s10 ||
-        lhs.s11 != rhs.s11
+        lhs.s0 != rhs.s0
+            || lhs.s1 != rhs.s1
+            || lhs.s2 != rhs.s2
+            || lhs.s3 != rhs.s3
+            || lhs.s4 != rhs.s4
+            || lhs.s5 != rhs.s5
+            || lhs.s6 != rhs.s6
+            || lhs.s7 != rhs.s7
+            || lhs.s8 != rhs.s8
+            || lhs.s9 != rhs.s9
+            || lhs.s10 != rhs.s10
+            || lhs.s11 != rhs.s11
     }
-
 }
 
 #[generate_trait]
-pub impl PoseidonStateArray of PoseidonStateArrarTrait  {
+pub impl PoseidonStateArray of PoseidonStateArrarTrait {
     fn default() -> PoseidonState {
         PoseidonState {
             s0: gl(0),

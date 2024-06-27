@@ -1,14 +1,14 @@
-use core::to_byte_array::FormatAsByteArray;
-use plonky2_verifier::fields::goldilocks::GoldilocksTrait;
-use plonky2_verifier::hash::poseidon_state::PoseidonStateArrarTrait;
 use core::array::ArrayTrait;
-use core::traits::Into;
+use core::array::Span;
+use core::array::SpanTrait;
 use core::box::BoxTrait;
 use core::option::OptionTrait;
-use core::array::SpanTrait;
+use core::to_byte_array::FormatAsByteArray;
+use core::traits::Into;
+use plonky2_verifier::fields::goldilocks::GoldilocksTrait;
 
 use plonky2_verifier::fields::goldilocks::{Goldilocks, gl};
-use core::array::Span;
+use plonky2_verifier::hash::poseidon_state::PoseidonStateArrarTrait;
 use plonky2_verifier::hash::poseidon_state::{PoseidonState, PoseidonStateArray};
 
 pub const SPONGE_RATE: usize = 8;
@@ -378,9 +378,9 @@ pub fn hash_n_to_m_no_pad(inputs: Span<Goldilocks>, num_outputs: usize,) -> Span
 
 #[cfg(test)]
 mod tests {
-    use core::traits::RemEq;
     use core::to_byte_array::FormatAsByteArray;
     use core::traits::Into;
+    use core::traits::RemEq;
     use super::{hash_n_to_m_no_pad, gl, PoseidonStateArray, PoseidonTrait};
 
     #[test]

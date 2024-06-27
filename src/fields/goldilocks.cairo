@@ -1,6 +1,6 @@
 use core::option::OptionTrait;
-use core::traits::TryInto;
 use core::result::ResultTrait;
+use core::traits::TryInto;
 
 pub const P: u64 = 0xffffffff00000001; // 2^64 - 2^32 + 1 - Goldilocks Field
 const P64NZ: NonZero<u64> = 0xffffffff00000001;
