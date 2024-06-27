@@ -31,9 +31,8 @@ pub impl GoldilocksImpl of GoldilocksTrait {
 
 pub impl GoldilocksAdd of core::traits::Add<Goldilocks> {
     fn add(lhs: Goldilocks, rhs: Goldilocks) -> Goldilocks {
-        let res = lhs.inner + rhs.inner;
-        let res = core::integer::u64_overflowing_sub(res, P).unwrap_or(res);
-        Goldilocks { inner: res }
+        let res: u128 = lhs.inner.into() + rhs.inner.into();
+        GoldilocksImpl::reduce_u128(res)
     }
 }
 pub impl GoldilocksSub of core::traits::Sub<Goldilocks> {
