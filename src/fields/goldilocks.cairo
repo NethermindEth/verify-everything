@@ -22,6 +22,11 @@ pub impl GoldilocksImpl of GoldilocksTrait {
         let (_, res) = core::integer::u128_safe_divmod(val, P128NZ);
         Goldilocks { inner: res.try_into().unwrap() }
     }
+
+    fn add_u64(ref self: Goldilocks, val: u64) -> Goldilocks {
+        let other = GoldilocksTrait::reduce_u64(val);
+        self + other
+    }
 }
 
 pub impl GoldilocksAdd of core::traits::Add<Goldilocks> {
@@ -73,22 +78,22 @@ pub impl GoldilocksNeg of Neg<Goldilocks> {
     }
 }
 
-pub fn goldilocks(val: u64) -> Goldilocks {
+pub fn gl(val: u64) -> Goldilocks {
     GoldilocksImpl::reduce_u64(val)
 }
 
 #[cfg(test)]
 mod tests {
-    use super::{goldilocks, P};
+    use super::{gl, P};
 
     #[test]
     fn test_goldilocks() {
-        assert_eq!(goldilocks(P), goldilocks(0));
-        assert_eq!(goldilocks(P + 1), goldilocks(1));
-        assert_eq!(goldilocks(1) + goldilocks(2), goldilocks(3));
-        assert_eq!(goldilocks(3) - goldilocks(2), goldilocks(1));
-        assert_eq!(goldilocks(P - 1) + goldilocks(1), goldilocks(0));
-        assert_eq!(goldilocks(0) - goldilocks(1), goldilocks(P - 1));
-        assert_eq!(goldilocks(0) - goldilocks(P - 1), goldilocks(1));
+        assert_eq!(gl(P), gl(0));
+        assert_eq!(gl(P + 1), gl(1));
+        assert_eq!(gl(1) + gl(2), gl(3));
+        assert_eq!(gl(3) - gl(2), gl(1));
+        assert_eq!(gl(P - 1) + gl(1), gl(0));
+        assert_eq!(gl(0) - gl(1), gl(P - 1));
+        assert_eq!(gl(0) - gl(P - 1), gl(1));
     }
 }
