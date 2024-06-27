@@ -132,11 +132,11 @@ pub struct PoseidonPermutation {
 }
 
 trait Permuter {
-    fn permute(self: PoseidonPermutation) -> PoseidonPermutation;
+    fn permute(ref self: PoseidonPermutation);
     fn default() -> PoseidonPermutation;
     fn new(elts: Span<Goldilocks>) -> PoseidonPermutation;
-    fn set_elt(self: PoseidonPermutation, elt: Goldilocks, idx: usize) -> PoseidonPermutation;
-    fn set_from_slice(self: PoseidonPermutation, slice: Span<Goldilocks>, start_idx: usize) -> PoseidonPermutation;
+    fn set_elt(ref self: PoseidonPermutation, elt: Goldilocks, idx: usize);
+    fn set_from_slice(ref self: PoseidonPermutation, slice: Span<Goldilocks>, start_idx: usize);
     fn squeeze(self: PoseidonPermutation) -> Span<Goldilocks>;
 }
 
@@ -154,28 +154,24 @@ impl PoseidonPermuter of Permuter {
         }
     }
 
-    fn set_elt(self: PoseidonPermutation, elt: Goldilocks, idx: usize) -> PoseidonPermutation {
-        let mut new_perm = self;
-        new_perm.state = new_perm.state.set(elt, idx);
-        new_perm
+    fn set_elt(ref self: PoseidonPermutation, elt: Goldilocks, idx: usize) {
+        self.state.set(elt, idx);
     }
 
-    fn set_from_slice(self: PoseidonPermutation, slice: Span<Goldilocks>, start_idx: usize) -> PoseidonPermutation {
-        let mut new_perm = self;
+    fn set_from_slice(ref self: PoseidonPermutation, slice: Span<Goldilocks>, start_idx: usize) {
         let len = slice.len();        
         let mut idx = start_idx;
         loop {
             if idx >= len {
                 break;
             }
-            new_perm = new_perm.set_elt(*slice.at(idx), idx);
+            self.set_elt(*slice.at(idx), idx);
             idx += 1;
         };
-        new_perm
     }
 
-    fn permute(self: PoseidonPermutation) -> PoseidonPermutation {
-        self
+    fn permute(ref self: PoseidonPermutation) {
+        ()
     }
 
     fn squeeze(self: PoseidonPermutation) -> Span<Goldilocks> {
@@ -237,8 +233,8 @@ pub fn hash_n_to_m_no_pad(
             break;
         }
         let chunk_end_idx = min(inputs.len(), SPONGE_RATE);
-        perm = perm.set_from_slice(inputs.slice(chunk_start_idx, chunk_end_idx), 0);
-        perm = perm.permute();
+        perm.set_from_slice(inputs.slice(chunk_start_idx, chunk_end_idx), 0);
+        perm.permute();
         chunk_start_idx += SPONGE_RATE;
     };
 
@@ -253,7 +249,7 @@ pub fn hash_n_to_m_no_pad(
             break;
         }
 
-        perm = perm.permute();
+        perm.permute();
     };
 
     outputs.span()

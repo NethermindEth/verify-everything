@@ -52,39 +52,39 @@ pub impl PoseidonStateArray of PoseidonStateArrarTrait  {
         }
     }
 
-    fn at(self: PoseidonState, idx: usize) -> Goldilocks {
+    fn at(self: @PoseidonState, idx: usize) -> Goldilocks {
         match idx {
-            0 => self.s0,
-            1 => self.s1,
-            2 => self.s2,
-            3 => self.s3,
-            4 => self.s4,
-            5 => self.s5,
-            6 => self.s6,
-            7 => self.s7,
-            8 => self.s8,
-            9 => self.s9,
-            10 => self.s10,
-            11 => self.s11,
+            0 => *self.s0,
+            1 => *self.s1,
+            2 => *self.s2,
+            3 => *self.s3,
+            4 => *self.s4,
+            5 => *self.s5,
+            6 => *self.s6,
+            7 => *self.s7,
+            8 => *self.s8,
+            9 => *self.s9,
+            10 => *self.s10,
+            11 => *self.s11,
             _ => goldilocks(0),
         }
     }
 
-    fn set(self: PoseidonState,  elt: Goldilocks, idx: usize) -> PoseidonState {
+    fn set(ref self: PoseidonState,  elt: Goldilocks, idx: usize) {
         match idx {
-            0 => PoseidonState { s0: elt, ..self },
-            1 => PoseidonState { s1: elt, ..self },
-            2 => PoseidonState { s2: elt, ..self },
-            3 => PoseidonState { s3: elt, ..self },
-            4 => PoseidonState { s4: elt, ..self },
-            5 => PoseidonState { s5: elt, ..self },
-            6 => PoseidonState { s6: elt, ..self },
-            7 => PoseidonState { s7: elt, ..self },
-            8 => PoseidonState { s8: elt, ..self },
-            9 => PoseidonState { s9: elt, ..self },
-            10 => PoseidonState { s10: elt, ..self },
-            11 => PoseidonState { s11: elt, ..self },
-            _ => self,
+            0 => self.s0 = elt,
+            1 => self.s1 = elt,
+            2 => self.s2 = elt,
+            3 => self.s3 = elt,
+            4 => self.s4 = elt,
+            5 => self.s5 = elt,
+            6 => self.s6 = elt,
+            7 => self.s7 = elt,
+            8 => self.s8 = elt,
+            9 => self.s9 = elt,
+            10 => self.s10 = elt,
+            11 => self.s11 = elt,
+            _ => (),
         }
     }
 }
