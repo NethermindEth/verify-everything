@@ -11,7 +11,7 @@ use plonky2_verifier::hash::poseidon_state::PoseidonStateArrarTrait;
 use plonky2_verifier::hash::poseidon_state::{PoseidonState, PoseidonStateArray};
 use plonky2_verifier::hash::poseidon_constants::{
     ALL_ROUND_CONSTANTS, HALF_N_FULL_ROUNDS, MDS_MATRIX_CIRC, MDS_MATRIX_DIAG, SPONGE_WIDTH,
-    SPONGE_RATE, FAST_PARTIAL_ROUND_VS, FAST_PARTIAL_ROUND_W_HATS
+    SPONGE_RATE, FAST_PARTIAL_ROUND_VS, FAST_PARTIAL_ROUND_W_HATS, FAST_PARTIAL_FIRST_ROUND_CONSTANT
 };
 
 #[derive(Clone, Drop, Debug)]
@@ -179,6 +179,21 @@ impl PoseidonTrait of Poseidon {
         res += lhs * rhs;
 
         res
+    }
+
+    fn partial_first_constant_layer(ref state: PoseidonState,) {
+        let mut i = 0;
+        loop {
+            if (i >= 12) {
+                break;
+            }
+
+            if (i < SPONGE_WIDTH) {
+                state.set(i, state.at(i) + gl(FAST_PARTIAL_FIRST_ROUND_CONSTANT(i)));
+            }
+
+            i += 1;
+        }
     }
 
     fn mds_partial_layer_fast(state: @PoseidonState, r: usize) -> PoseidonState {
@@ -498,5 +513,47 @@ mod tests {
 
         let res = PoseidonTrait::mds_partial_layer_fast(@state, 4);
         assert_eq!(res, expected_result);
+    }
+
+    #[test]
+    fn test_partial_layer_constant_layer() {
+        let mut input = PoseidonStateArray::new(
+            array![
+                gl(14539304406632456965),
+                gl(6017649415082732836),
+                gl(14032894387583547173),
+                gl(17921459405982495266),
+                gl(17827477559628505537),
+                gl(6260806333151500256),
+                gl(16941299559327036255),
+                gl(9834758367186550594),
+                gl(12377722660802145351),
+                gl(4233063172349874047),
+                gl(3974876817075589809),
+                gl(11859251607231694018)
+            ]
+                .span()
+        );
+
+        let expected_result = PoseidonStateArray::new(
+            array![
+                gl(471176906308802316),
+                gl(4401980321970947348),
+                gl(13060993412745816787),
+                gl(14629343519671912171),
+                gl(13600602154763036659),
+                gl(16770127937542517218),
+                gl(16040459091382950361),
+                gl(13108387677668497835),
+                gl(2293865805537723623),
+                gl(11820824528557420228),
+                gl(10933900285832905721),
+                gl(7478455332676441037)
+            ]
+                .span()
+        );
+
+        PoseidonTrait::partial_first_constant_layer(ref input);
+        assert_eq!(input, expected_result);
     }
 }
