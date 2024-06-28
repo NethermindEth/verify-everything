@@ -6,6 +6,7 @@ any number of verifiers.
 
 The initial list of potential verifiers will be as follows:
 
-1. halo2 (PSE)
-2. halo2 (ZCash)
-3. Plonky3
+1. halo2 (IPA)
+2. halo2 (KZG)
+3. Plonky2
+4. Plonk
