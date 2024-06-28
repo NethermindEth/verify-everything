@@ -287,21 +287,6 @@ impl PoseidonTrait of Poseidon {
     }
 }
 
-pub trait PoseidonTraittmp {
-    fn poseidon(state: PoseidonState) -> PoseidonState;
-    fn full_rounds(ref state: PoseidonState, ref round_ctr: usize);
-    fn partial_rounds(ref state: PoseidonState, ref round_ctr: usize);
-    fn constant_layer();
-    fn sbox_layer();
-    fn mds_layer();
-    fn sbox_monomial();
-    fn mds_row_shf();
-    fn partial_first_constant_layer();
-    fn mds_partial_layer_init();
-    fn mds_partial_layer_fast();
-}
-
-
 fn min(a: usize, b: usize) -> usize {
     if a < b {
         a
