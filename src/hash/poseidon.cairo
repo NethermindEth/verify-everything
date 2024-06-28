@@ -688,4 +688,46 @@ mod tests {
         assert_eq!(input, expected_result);
         assert_eq!(round_ctr, 22);
     }
+
+    #[test]
+    fn test_poseidon() {
+        let input = PoseidonStateArray::new(
+            array![
+                gl(0x8ccbbbea4fe5d2b7),
+                gl(0xc2af59ee9ec49970),
+                gl(0x90f7e1a9e658446a),
+                gl(0xdcc0630a3ab8b1b8),
+                gl(0x7ff8256bca20588c),
+                gl(0x5d99a7ca0c44ecfb),
+                gl(0x48452b17a70fbee3),
+                gl(0xeb09d654690b6c88),
+                gl(0x4a55d3a39c676a88),
+                gl(0xc0407a38d2285139),
+                gl(0xa234bac9356386d1),
+                gl(0xe1633f2bad98a52f),
+            ]
+                .span()
+        );
+
+        let expected_result = PoseidonStateArray::new(
+            array![
+                gl(0xa89280105650c4ec),
+                gl(0xab542d53860d12ed),
+                gl(0x5704148e9ccab94f),
+                gl(0xd3a826d4b62da9f5),
+                gl(0x8a7a6ca87892574f),
+                gl(0xc7017e1cad1a674e),
+                gl(0x1f06668922318e34),
+                gl(0xa3b203bc8102676f),
+                gl(0xfcc781b0ce382bf2),
+                gl(0x934c69ff3ed14ba5),
+                gl(0x504688a5996e8f13),
+                gl(0x401f3f2ed524a2ba),
+            ]
+                .span()
+        );
+
+        let res = PoseidonTrait::poseidon(input);
+        assert_eq!(res, expected_result);
+    }
 }
