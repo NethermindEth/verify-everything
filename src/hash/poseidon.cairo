@@ -11,7 +11,7 @@ use plonky2_verifier::hash::poseidon_state::PoseidonStateArrarTrait;
 use plonky2_verifier::hash::poseidon_state::{PoseidonState, PoseidonStateArray};
 use plonky2_verifier::hash::poseidon_constants::{
     ALL_ROUND_CONSTANTS, HALF_N_FULL_ROUNDS, MDS_MATRIX_CIRC, MDS_MATRIX_DIAG, SPONGE_WIDTH,
-    SPONGE_RATE
+    SPONGE_RATE, FAST_PARTIAL_ROUND_VS, FAST_PARTIAL_ROUND_W_HATS
 };
 
 #[derive(Clone, Drop, Debug)]
@@ -19,16 +19,7 @@ pub struct PoseidonPermutation {
     pub state: PoseidonState,
 }
 
-trait Permuter {
-    fn permute(ref self: PoseidonPermutation);
-    fn default() -> PoseidonPermutation;
-    fn new(elts: Span<Goldilocks>) -> PoseidonPermutation;
-    fn set_elt(ref self: PoseidonPermutation, elt: Goldilocks, idx: usize);
-    fn set_from_slice(ref self: PoseidonPermutation, slice: Span<Goldilocks>, start_idx: usize);
-    fn squeeze(self: PoseidonPermutation) -> Span<Goldilocks>;
-}
-
-
+#[generate_trait]
 impl PoseidonPermuter of Permuter {
     fn default() -> PoseidonPermutation {
         PoseidonPermutation { state: PoseidonStateArray::default(), }
@@ -189,18 +180,50 @@ impl PoseidonTrait of Poseidon {
 
         res
     }
-// fn mds_partial_layer_fast(state: @PoseidonState, r: usize) -> PoseidonState {
-//     let mut d_sum = 0;
 
-//     let mut i = 0;
-//     loop {
-//         if (i >= 12) {
-//             break;
-//         }
+    fn mds_partial_layer_fast(state: @PoseidonState, r: usize) -> PoseidonState {
+        let mut d_sum = 0;
 
-//         if (i < SPONGE_WIDTH) {}
-//     }
-// }
+        let mut i = 1;
+        loop {
+            if (i >= 12) {
+                break;
+            }
+
+            if (i < SPONGE_WIDTH) {
+                let t: u256 = FAST_PARTIAL_ROUND_W_HATS(r, i - 1).into();
+                let si: u256 = state.at(i).inner.into();
+                d_sum += t * si;
+            }
+
+            i += 1;
+        };
+
+        let s0: u256 = state.at(0).inner.into();
+        let mds0to0: u256 = (MDS_MATRIX_CIRC(0) + MDS_MATRIX_DIAG(0)).into();
+        d_sum += mds0to0 * s0;
+        let d = GoldilocksTrait::reduce_u256(d_sum);
+
+        let mut result = PoseidonStateArray::default();
+        result.set(0, d);
+
+        i = 1;
+        loop {
+            if (i >= 12) {
+                break;
+            }
+
+            if (i < SPONGE_WIDTH) {
+                let t = GoldilocksTrait::reduce_u64(FAST_PARTIAL_ROUND_VS(r, i - 1));
+                let acc = state.at(i) + state.at(0) * t;
+                result.set(i, acc);
+            }
+
+            i += 1;
+        };
+
+        result
+    }
 }
 
 pub trait PoseidonTraittmp {
@@ -436,11 +459,44 @@ mod tests {
     }
 
     #[test]
-    fn test_2d_array() {
-        let d2 = array![array![0, 1, 2], array![2, 3, 5]];
+    fn test_partial_layer_fast() {
+        let state = PoseidonStateArray::new(
+            array![
+                gl(1158591658132417480),
+                gl(137247361791616024),
+                gl(3218529736599695278),
+                gl(3925622091019036698),
+                gl(4635706851757400233),
+                gl(17703058331371986941),
+                gl(13692720122490665532),
+                gl(2541895476654820342),
+                gl(7339931419297205742),
+                gl(14123711498847824253),
+                gl(7605504232204308633),
+                gl(13111474160528884292)
+            ]
+                .span()
+        );
 
-        let el = *((d2.get(1).unwrap().unbox()).get(0).unwrap().unbox());
+        let expected_result = PoseidonStateArray::new(
+            array![
+                gl(14539304406632456965),
+                gl(6017649415082732836),
+                gl(14032894387583547173),
+                gl(17921459405982495266),
+                gl(17827477559628505537),
+                gl(6260806333151500256),
+                gl(16941299559327036255),
+                gl(9834758367186550594),
+                gl(12377722660802145351),
+                gl(4233063172349874047),
+                gl(3974876817075589809),
+                gl(11859251607231694018)
+            ]
+                .span()
+        );
 
-        println!("{:?}", el);
+        let res = PoseidonTrait::mds_partial_layer_fast(@state, 4);
+        assert_eq!(res, expected_result);
     }
 }
