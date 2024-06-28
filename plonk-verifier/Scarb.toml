@@ -1,0 +1,13 @@
+[package]
+name = "plonk_verifier"
+version = "0.1.0"
+edition = "2023_10"
+
+[dependencies] 
+starknet = ">=2.6.0" 
+
+[[target.starknet-contract]]
+sierra = true
+casm = true
+
+
