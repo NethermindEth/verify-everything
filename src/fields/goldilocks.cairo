@@ -1,10 +1,17 @@
 use core::option::OptionTrait;
 use core::result::ResultTrait;
 use core::traits::TryInto;
+use core::integer::U128MulGuarantee;
+
+pub extern fn u256_safe_divmod(
+    lhs: u256, rhs: NonZero<u256>
+) -> (u256, u256, U128MulGuarantee) implicits(RangeCheck) nopanic;
+
 
 pub const P: u64 = 0xffffffff00000001; // 2^64 - 2^32 + 1 - Goldilocks Field
 const P64NZ: NonZero<u64> = 0xffffffff00000001;
 const P128NZ: NonZero<u128> = 0xffffffff00000001;
+const P256NZ: NonZero<u256> = 0xffffffff00000001;
 
 #[derive(Copy, Drop, Debug, PartialEq, Eq)]
 pub struct Goldilocks {
@@ -15,6 +22,11 @@ pub struct Goldilocks {
 pub impl GoldilocksImpl of GoldilocksTrait {
     fn reduce_u64(val: u64) -> Goldilocks {
         let (_, res) = core::integer::u64_safe_divmod(val, P64NZ);
+        Goldilocks { inner: res.try_into().unwrap() }
+    }
+
+    fn reduce_u256(val: u256) -> Goldilocks {
+        let (_, res, _) = u256_safe_divmod(val, P256NZ);
         Goldilocks { inner: res.try_into().unwrap() }
     }
 
@@ -86,7 +98,15 @@ pub fn gl(val: u64) -> Goldilocks {
 
 #[cfg(test)]
 mod tests {
-    use super::{gl, P};
+    use super::{gl, P, GoldilocksImpl};
+
+    #[test]
+    fn reduce_u256() {
+        let val: u256 = 0x123456789abcdef000000000000000000000000000;
+        let res = GoldilocksImpl::reduce_u256(val);
+
+        assert_eq!(res.inner, 14675409648146780179);
+    }
 
     #[test]
     fn test_goldilocks() {
