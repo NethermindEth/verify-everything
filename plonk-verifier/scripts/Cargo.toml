@@ -1,2 +1,13 @@
+[package]
+name = "starknet-plonk_verifier-scripts"
+version = "0.0.1"
+authors = [ "Dorian Liu" ]
+
+[[bin]]
+name = "test"
+path = "src/write_contract.rs"
+
 [dependencies]
-dotenv = "0.15"  # Check for the latest version on crates.io
+dotenv = "0.15"
+tokio = { version = "1", features = ["full"] }
+starknet = "0.3"  
