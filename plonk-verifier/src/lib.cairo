@@ -1,49 +1,69 @@
-// use starknet::ContractAddress;
+mod plonk{
+    mod verify;
+    mod constants;
+}
+mod traits;
+use traits::{FieldOps, FieldUtils};
 
-// #[starknet::contract]
-// mod PlonkVerifier {
-//     use starknet::ContractAddress;
-//     use starknet::get_caller_address;
-// fn verify_proof() {}
-// fn check_input() {}
-// fn calculate_challenges() {}
-// fn calculate_lagrange() {}
-// fn calculate_pi() {}
-// fn calculate_r0() {}
-// fn calculate_d() {}
-// fn calculate_f() {}
-// fn calculate_e() {}
-// fn check_pairing() {}
+mod curve;
+use curve::{groups as g, pairing};
 
-// constants 
-// const W1: u256 = 4158865282786404163413953114870269622875596290766033564087307867933865333818;
-// const Q: u256 = 21888242871839275222246405745257275088548364400416034343698204186575808495617;
-// const QF: u256 = 21888242871839275222246405745257275088696311157297823662689037894645226208583;
-// const G1x: felt252 = 1;
-// const G1y: felt252 = 2;
+mod math {
+    mod i257;
+    mod fast_mod;
+// #[cfg(test)]
+// mod fast_mod_tests;
+}
+use math::fast_mod;
 
-// #[storage] // need to be modified
-// struct Storage {
-//     owner: ContractAddress,
-// }
-// #[derive(Drop)]
-// struct Proof {
-//     A: Array<felt252>,
-//     B: Array<felt252>,
-//     C: Array<felt252>,
-//     Z: Array<felt252>,
-//     T1: Array<felt252>,
-//     T2: Array<felt252>,
-//     T3: Array<felt252>,
-//     Wxi: Array<felt252>,
-//     Wxiw: Array<felt252>,
-//     eval_a: felt252,
-//     eval_b: felt252,
-//     eval_c: felt252,
-//     eval_s1: felt252,
-//     eval_s2: felt252,
-//     eval_zw: felt252,
-// }
-// }
+mod fields {
+    mod fq_generics;
+    mod fq_sparse;
+    mod fq_1;
+    mod fq_2;
+    mod fq_6;
+    mod fq_12;
+    mod fq_12_direct;
+    mod fq_12_squaring;
+    mod fq_12_exponentiation;
+    mod frobenius;
+    mod print;
 
-mod verifier;
+    #[cfg(test)]
+    mod tests { //
+    // mod fq;
+    // mod fq2;
+    // mod fq6;
+    // mod fq12;
+    // mod fq12_expo;
+    // mod fq_sparse;
+    // mod u512;
+    // mod frobenius;
+    }
+
+    use fq_generics::{TFqAdd, TFqSub, TFqMul, TFqDiv, TFqNeg, TFqPartialEq,};
+    use fq_1::{Fq, FqOps, FqShort, FqMulShort, FqUtils, fq, FqIntoU512Tuple};
+    use fq_2::{
+        Fq2, Fq2Ops, Fq2Short, Fq2MulShort, Fq2Utils, fq2, Fq2Frobenius, Fq2IntoU512Tuple, ufq2_inv
+    };
+    use fq_6::{Fq6, Fq6Ops, Fq6Short, Fq6MulShort, Fq6Utils, fq6, Fq6Frobenius, SixU512};
+    use fq_12::{Fq12, Fq12Ops, Fq12Utils, fq12, Fq12Frobenius};
+    use fq_12_exponentiation::Fq12Exponentiation;
+    use fq_sparse::{
+        FqSparse, FqSparseTrait, Fq12Sparse034, Fq12Sparse01234, Fq6Sparse01, sparse_fq6
+    };
+    pub type FS034 = Fq12Sparse034;
+    pub type FS01234 = Fq12Sparse01234;
+    pub type FS01 = Fq6Sparse01;
+    use fq_12_squaring::{Fq12Squaring, Krbn2345};
+    use plonk_verifier::traits::{FieldUtils, FieldOps, FieldShortcuts, FieldMulShortcuts};
+}
+
+// #[cfg(test)]
+// mod playground;
+// #[cfg(test)]
+// mod tests;
+// #[cfg(test)]
+// mod bench;
+
+
