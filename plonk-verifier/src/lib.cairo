@@ -1,4 +1,4 @@
-mod plonk{
+mod plonk {
     mod verify;
     mod constants;
 }
@@ -11,8 +11,8 @@ use curve::{groups as g, pairing};
 mod math {
     mod i257;
     mod fast_mod;
-// #[cfg(test)]
-// mod fast_mod_tests;
+    #[cfg(test)]
+    mod fast_mod_tests;
 }
 use math::fast_mod;
 
@@ -30,7 +30,7 @@ mod fields {
     mod print;
 
     #[cfg(test)]
-    mod tests { //
+    mod tests { // 
     // mod fq;
     // mod fq2;
     // mod fq6;
@@ -58,12 +58,4 @@ mod fields {
     use fq_12_squaring::{Fq12Squaring, Krbn2345};
     use plonk_verifier::traits::{FieldUtils, FieldOps, FieldShortcuts, FieldMulShortcuts};
 }
-
-// #[cfg(test)]
-// mod playground;
-// #[cfg(test)]
-// mod tests;
-// #[cfg(test)]
-// mod bench;
-
 

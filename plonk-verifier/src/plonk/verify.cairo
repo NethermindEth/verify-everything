@@ -1,6 +1,5 @@
 use core::traits::Into;
 use core::array::ArrayTrait;
-use plonk_verifier::plonk::constants::{PROOF, Q};
 
 
 #[derive(Clone, Drop, Debug)]
@@ -12,9 +11,7 @@ impl PlonkVerifier of PVerifier {
     fn check_field(num: u256, p: u256) -> bool {
         num >= 0 && num < p
     }
-    fn check_input() {
-    // let valid_a = PlonkVerifier::check_field(PROOF.A, Q);
-    // PlonkVerifier::check_field();
+    fn check_input() {// PlonkVerifier::check_field();
     // PlonkVerifier::check_field((pEval_c));
     // PlonkVerifier::check_field((pEval_s1));
     // PlonkVerifier::check_field((pEval_s2));
