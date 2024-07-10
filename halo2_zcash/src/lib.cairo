@@ -1,2 +1,2 @@
 mod commitment;
-pub mod fields; 
+pub mod curves; 
