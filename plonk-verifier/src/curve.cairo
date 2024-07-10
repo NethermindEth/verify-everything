@@ -10,8 +10,9 @@ use constants::{
 use constants::{ATE_LOOP_COUNT, LOG_ATE_LOOP_COUNT, six_t_plus_2_naf_rev_trimmed};
 use plonk_verifier::fields::print::u512Display;
 use groups::{AffineG1, AffineG2};
-// #[cfg(test)]
-// mod groups_tests;
+
+#[cfg(test)]
+mod groups_tests;
 
 mod pairing {
     mod miller_utils;

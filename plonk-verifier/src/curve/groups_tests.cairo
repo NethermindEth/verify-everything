@@ -7,7 +7,9 @@ use plonk_verifier::curve::groups::ECOperations;
 // test plonk_verifier::curve::groups_tests::g2_mul ... ok (gas usage est.: 2999470)
 
 use plonk_verifier::fields::fq;
-use plonk_verifier::curve::groups::{Affine, AffineOps, AffineG1, AffineG1Impl, g1, AffineG2, AffineG2Impl, g2};
+use plonk_verifier::curve::groups::{
+    Affine, AffineOps, AffineG1, AffineG1Impl, g1, AffineG2, AffineG2Impl, g2
+};
 use debug::PrintTrait;
 
 const DBL_X: u256 = 1368015179489954701390400359078579693043519447331113978918064868415326638035;

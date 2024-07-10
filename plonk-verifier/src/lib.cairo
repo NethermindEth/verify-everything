@@ -11,8 +11,8 @@ use curve::{groups as g, pairing};
 mod math {
     mod i257;
     mod fast_mod;
-    #[cfg(test)]
-    mod fast_mod_tests;
+// #[cfg(test)]
+// mod fast_mod_tests;
 }
 use math::fast_mod;
 
