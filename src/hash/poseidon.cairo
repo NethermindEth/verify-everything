@@ -48,7 +48,7 @@ impl PoseidonPermuter of Permuter {
     }
 
     fn permute(ref self: PoseidonPermutation) {
-        ()
+        self.state = PoseidonTrait::poseidon(self.state);
     }
 
     fn squeeze(self: PoseidonPermutation) -> Span<Goldilocks> {
@@ -312,8 +312,9 @@ pub fn hash_n_to_m_no_pad(inputs: Span<Goldilocks>, num_outputs: usize,) -> Span
         if (chunk_start_idx >= inputs.len()) {
             break;
         }
-        let chunk_end_idx = min(inputs.len(), SPONGE_RATE);
-        perm.set_from_slice(inputs.slice(chunk_start_idx, chunk_end_idx), 0);
+        let len = min(inputs.len() - chunk_start_idx, SPONGE_RATE);
+        let chunk = inputs.slice(chunk_start_idx, len);
+        perm.set_from_slice(chunk, 0);
         perm.permute();
         chunk_start_idx += SPONGE_RATE;
     };
@@ -323,9 +324,9 @@ pub fn hash_n_to_m_no_pad(inputs: Span<Goldilocks>, num_outputs: usize,) -> Span
     loop {
         let squeezed = perm.clone().squeeze();
         let remaining = num_outputs - outputs.len();
-        outputs.append_span(squeezed.slice(0, max(remaining, squeezed.len())));
+        outputs.append_span(squeezed.slice(0, min(squeezed.len(), remaining)));
 
-        if (outputs.len() >= num_outputs) {
+        if (outputs.len() == num_outputs) {
             break;
         }
 
@@ -713,6 +714,45 @@ mod tests {
         );
 
         let res = PoseidonTrait::poseidon(input);
+        assert_eq!(res, expected_result);
+    }
+
+    #[test]
+    fn test_hash_n_to_m() {
+        let inputs = array![
+            gl(0x8ccbbbea4fe5d2b7),
+            gl(0xc2af59ee9ec49970),
+            gl(0x90f7e1a9e658446a),
+            gl(0xdcc0630a3ab8b1b8),
+            gl(0x7ff8256bca20588c),
+            gl(0x5d99a7ca0c44ecfb),
+            gl(0x48452b17a70fbee3),
+            gl(0xeb09d654690b6c88),
+            gl(0x4a55d3a39c676a88),
+            gl(0xc0407a38d2285139),
+            gl(0xa234bac9356386d1),
+            gl(0xe1633f2bad98a52f),
+        ]
+            .span();
+
+        let res = hash_n_to_m_no_pad(inputs, 12);
+
+        let expected_result = array![
+            gl(6349479711091978079),
+            gl(10683045036077094258),
+            gl(2823735847975198144),
+            gl(3985988952289670700),
+            gl(5798729777066225290),
+            gl(4685092000851135126),
+            gl(6733136384532942948),
+            gl(16907084925699390562),
+            gl(17403481966703895704),
+            gl(18406498950571142509),
+            gl(14139074714504212678),
+            gl(361636287427537691)
+        ]
+            .span();
+
         assert_eq!(res, expected_result);
     }
 }
