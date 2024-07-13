@@ -217,26 +217,26 @@ pub mod Fq {
 
     /// R = 2^256 mod q
     const R: Fq = Fq{
-        0x5b2b3e9cfffffffd,
-        0x992c350be3420567,
-        0xffffffffffffffff,
-        0x3fffffffffffffff,
+        a: 0x5b2b3e9cfffffffd,
+        b: 0x992c350be3420567,
+        c: 0xffffffffffffffff,
+        d: 0x3fffffffffffffff,
     };
 
     /// R^2 = 2^512 mod q
     const R2: Fq = Fq{
-        0xfc9678ff0000000f,
-        0x67bb433d891a16e3,
-        0x7fae231004ccf590,
-        0x096d41af7ccfdaa9,
+        a: 0xfc9678ff0000000f,
+        b: 0x67bb433d891a16e3,
+        c: 0x7fae231004ccf590,
+        d: 0x096d41af7ccfdaa9,
     };
 
     /// R^3 = 2^768 mod q
     const R3: Fq = Fq{
-        0x008b421c249dae4c,
-        0xe13bda50dba41326,
-        0x88fececb8e15cb63,
-        0x07dd97a06e6792c8,
+        a: 0x008b421c249dae4c,
+        b: 0xe13bda50dba41326,
+        c: 0x88fececb8e15cb63,
+        d: 0x07dd97a06e6792c8,
     };
 
     impl U64IntoFq of Into<u64, Fq> {
