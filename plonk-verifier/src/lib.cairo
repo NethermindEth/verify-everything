@@ -1,6 +1,9 @@
 mod plonk {
     mod verify;
     mod constants;
+    mod types;
+    #[cfg(test)]
+    mod tests;
 }
 mod traits;
 use traits::{FieldOps, FieldUtils};

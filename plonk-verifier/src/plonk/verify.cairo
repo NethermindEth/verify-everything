@@ -6,44 +6,37 @@ use plonk_verifier::curve::groups::{g1, g2, AffineG1, AffineG2};
 use plonk_verifier::curve::groups::ECOperations;
 use plonk_verifier::fields::{fq, Fq, fq2, Fq2};
 use plonk_verifier::curve::constants::{ORDER};
+use plonk_verifier::plonk::types::{PlonkProof, PlonkVerificationKey};
+
 #[generate_trait]
 impl PlonkVerifier of PVerifier {
     fn verify(
-        A: AffineG1,
-        B: AffineG1,
-        C: AffineG1,
-        Z: AffineG1,
-        T1: AffineG1,
-        T2: AffineG1,
-        T3: AffineG1,
-        Wxi: AffineG1,
-        Wxix: AffineG1,
-        eval_a: Fq,
-        eval_b: Fq,
-        eval_c: Fq,
-        eval_s1: Fq,
-        eval_s2: Fq,
-        eval_zw: Fq
+        verification_key: PlonkVerificationKey, proof: PlonkProof, publicSignals: Array<u256>
     ) -> bool {
         let mut result = true;
         result = result
-            && PlonkVerifier::is_on_curve(A)
-            && PlonkVerifier::is_on_curve(B)
-            && PlonkVerifier::is_on_curve(C)
-            && PlonkVerifier::is_on_curve(Z)
-            && PlonkVerifier::is_on_curve(T1)
-            && PlonkVerifier::is_on_curve(T2)
-            && PlonkVerifier::is_on_curve(T3)
-            && PlonkVerifier::is_on_curve(Wxi)
-            && PlonkVerifier::is_on_curve(Wxix);
+            && PlonkVerifier::is_on_curve(proof.A)
+            && PlonkVerifier::is_on_curve(proof.B)
+            && PlonkVerifier::is_on_curve(proof.C)
+            && PlonkVerifier::is_on_curve(proof.Z)
+            && PlonkVerifier::is_on_curve(proof.T1)
+            && PlonkVerifier::is_on_curve(proof.T2)
+            && PlonkVerifier::is_on_curve(proof.T3)
+            && PlonkVerifier::is_on_curve(proof.Wxi)
+            && PlonkVerifier::is_on_curve(proof.Wxiw);
 
         result = result
-            && PlonkVerifier::is_in_field(eval_a)
-            && PlonkVerifier::is_in_field(eval_b)
-            && PlonkVerifier::is_in_field(eval_c)
-            && PlonkVerifier::is_in_field(eval_s1)
-            && PlonkVerifier::is_in_field(eval_s2)
-            && PlonkVerifier::is_in_field(eval_zw);
+            && PlonkVerifier::is_in_field(proof.eval_a)
+            && PlonkVerifier::is_in_field(proof.eval_b)
+            && PlonkVerifier::is_in_field(proof.eval_c)
+            && PlonkVerifier::is_in_field(proof.eval_s1)
+            && PlonkVerifier::is_in_field(proof.eval_s2)
+            && PlonkVerifier::is_in_field(proof.eval_zw);
+
+        result = result
+            && PlonkVerifier::check_public_inputs_length(
+                verification_key.nPublic, publicSignals.len().into()
+            );
 
         result
     }
@@ -59,12 +52,23 @@ impl PlonkVerifier of PVerifier {
         rhs == lhs
     }
 
+    // step 2: check if the field element is in the field
     fn is_in_field(num: Fq) -> bool {
-        // FIELD is assumed to be defined globally or passed as a parameter
+        // bn254 curve field: 21888242871839275222246405745257275088548364400416034343698204186575808495617
         let field_p = fq(ORDER);
 
         num.c0 < field_p.c0
     }
+
+    //step 3: check proof public inputs match the verification key 
+    fn check_public_inputs_length(len_a: u256, len_b: u256) -> bool {
+        len_a == len_b
+    }
+
+    // step 4: compute challenge
+    fn compute_challenge() {}
+    // step 6: calculate the lagrange evaluations
+    fn calculate_lagrange_evaluations() {}
 }
 
 
@@ -102,5 +106,15 @@ mod tests {
         );
         assert_eq!(PlonkVerifier::is_in_field(num_in_field), true);
         assert_eq!(PlonkVerifier::is_in_field(num_not_in_field), false);
+    }
+
+    #[test]
+    fn test_check_public_inputs_length() {
+        let len_a = 5;
+        let len_b = 5;
+        let len_c = 6;
+
+        assert_eq!(PlonkVerifier::check_public_inputs_length(len_a, len_b), true);
+        assert_eq!(PlonkVerifier::check_public_inputs_length(len_a, len_c), false);
     }
 }

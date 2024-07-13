@@ -1,4 +1,5 @@
 use core::array::ArrayTrait;
+use debug::PrintTrait;
 use core::fmt::{Display, Formatter, Error};
 use plonk_verifier::fields::{fq, fq2, fq12, fq6, Fq, Fq12, Fq6};
 use plonk_verifier::curve::groups::{g1, g2, AffineG1, AffineG2};
@@ -51,9 +52,13 @@ fn proof() -> (AffineG1, AffineG1, AffineG1, AffineG1, AffineG1, AffineG1, Affin
         A, B, C, Z, T1, T2, T3, Wxi, Wxiw, eval_a, eval_b, eval_c, eval_s1, eval_s2, eval_zw
     )
 }
-
+#[cairofmt::skip]
+fn public_inputs() -> Array<u256> {
+    array![18830187580832391953292633656724590808884826987965006042179076864562655717112, 3142850441180811825929099504508009930706757625639242073235848449635957522737, 1390849295786071768276380950238675083608645509734, 642829559307850963015472508762062935916233390536, 0]
+}
 // verification_key
-fn vk() -> (
+#[cairofmt::skip]
+fn verification_key() -> (
     u256,
     u256,
     u256,

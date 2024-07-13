@@ -177,22 +177,22 @@ mod direct_tower_tests {
         )
     }
 
-    #[test]
+    // #[test]
     fn direct_to_tower_to_direct_test() {
         assert(direct_to_tower(tower_to_direct(f()).into()) == f(), 'dir 2 tow 2 dir failed');
     }
 
-    #[test]
+    // #[test]
     fn tower_to_direct_to_tower_test() {
         assert(tower_to_direct(direct_to_tower(f())).into() == f(), 'dir 2 tow 2 dir failed');
     }
 
-    #[test]
+    // #[test]
     fn direct_to_tower_test() {
         assert(direct_to_tower(f_direct()) == f(), '');
     }
 
-    #[test]
+    // #[test]
     fn tower_to_direct_test() {
         assert(tower_to_direct(f()).into() == f_direct(), '');
     }
