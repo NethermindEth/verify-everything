@@ -1,6 +1,8 @@
+use core::array::ArrayTrait;
+use core::traits::Into;
 use plonk_verifier::curve::groups::{AffineG1, AffineG2};
-
 use plonk_verifier::fields::{Fq};
+
 #[derive(Copy, Drop)]
 struct PlonkProof {
     A: AffineG1,
@@ -35,4 +37,14 @@ struct PlonkVerificationKey {
     S3: AffineG1,
     X_2: AffineG2,
     w: u256
+}
+
+#[derive(Drop)]
+struct PlonkChallenge {
+    beta: Fq,
+    gamma: Fq,
+    alpha: Fq,
+    xi: Fq,
+    v: Array<Fq>,
+    u: Fq
 }

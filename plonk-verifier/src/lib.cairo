@@ -2,6 +2,7 @@ mod plonk {
     mod verify;
     mod constants;
     mod types;
+    mod transcript;
     #[cfg(test)]
     mod tests;
 }
@@ -45,7 +46,7 @@ mod fields {
     }
 
     use fq_generics::{TFqAdd, TFqSub, TFqMul, TFqDiv, TFqNeg, TFqPartialEq,};
-    use fq_1::{Fq, FqOps, FqShort, FqMulShort, FqUtils, fq, FqIntoU512Tuple};
+    use fq_1::{Fq, FqOps, FqShort, FqMulShort, FqUtils, fq, FqIntoU512Tuple, FqIntoU256};
     use fq_2::{
         Fq2, Fq2Ops, Fq2Short, Fq2MulShort, Fq2Utils, fq2, Fq2Frobenius, Fq2IntoU512Tuple, ufq2_inv
     };
