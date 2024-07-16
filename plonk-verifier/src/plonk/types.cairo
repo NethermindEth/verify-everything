@@ -25,6 +25,7 @@ struct PlonkProof {
 #[derive(Copy, Drop)]
 struct PlonkVerificationKey {
     n: u256,
+    power: u256,
     nPublic: u256,
     nLagrange: u256,
     Qm: AffineG1,
@@ -45,6 +46,8 @@ struct PlonkChallenge {
     gamma: Fq,
     alpha: Fq,
     xi: Fq,
+    xin: Fq,
+    zh: Fq,
     v: Array<Fq>,
     u: Fq
 }

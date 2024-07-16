@@ -62,6 +62,7 @@ fn verification_key() -> (
     u256,
     u256,
     u256,
+    u256,
     AffineG1,
     AffineG1,
     AffineG1,
@@ -74,7 +75,7 @@ fn verification_key() -> (
     u256
 ) {
     let n = 4096;
-    let _power = 12;
+    let power = 12;
     let _k1 = 2;
     let _k2 = 3;
 
@@ -124,5 +125,5 @@ fn verification_key() -> (
         4191056764018303486822079644163839762717699764181526746691927713416713155706
     );
     let w = 4158865282786404163413953114870269622875596290766033564087307867933865333818;
-    (n, nPublic, nLagrange, Qm, Ql, Qr, Qo, Qc, S1, S2, S3, X_2, w)
+    (n, power, nPublic, nLagrange, Qm, Ql, Qr, Qo, Qc, S1, S2, S3, X_2, w)
 }

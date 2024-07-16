@@ -6,10 +6,10 @@ use plonk_verifier::plonk::verify::{PlonkVerifier};
 #[available_gas(20000000000)]
 fn plonk_verify() {
     // verification PlonkVerificationKey
-    let (n, nPublic, nLagrange, Qm, Ql, Qr, Qo, Qc, S1, S2, S3, X_2, w) =
+    let (n, power, nPublic, nLagrange, Qm, Ql, Qr, Qo, Qc, S1, S2, S3, X_2, w) =
         constants::verification_key();
     let verification_key = PlonkVerificationKey {
-        n, nPublic, nLagrange, Qm, Ql, Qr, Qo, Qc, S1, S2, S3, X_2, w
+        n, power, nPublic, nLagrange, Qm, Ql, Qr, Qo, Qc, S1, S2, S3, X_2, w
     };
 
     // proof

@@ -1,14 +1,15 @@
-use plonk_verifier::traits::FieldMulShortcuts;
-use plonk_verifier::plonk::transcript::Keccak256Transcript;
 use core::traits::Destruct;
 use core::clone::Clone;
 use core::traits::Into;
 use core::array::ArrayTrait;
+use core::cmp::max;
 
+use plonk_verifier::traits::FieldMulShortcuts;
+use plonk_verifier::plonk::transcript::Keccak256Transcript;
 use plonk_verifier::traits::{FieldOps as FOps, FieldShortcuts as FShort};
 use plonk_verifier::curve::groups::{g1, g2, AffineG1, AffineG2};
 use plonk_verifier::curve::groups::ECOperations;
-use plonk_verifier::fields::{fq, Fq, fq2, Fq2, FqOps};
+use plonk_verifier::fields::{fq, Fq, fq2, Fq2, FqOps, FqUtils};
 use plonk_verifier::curve::constants::{ORDER};
 use plonk_verifier::plonk::types::{PlonkProof, PlonkVerificationKey, PlonkChallenge};
 use plonk_verifier::plonk::transcript::{Transcript};
@@ -42,7 +43,7 @@ impl PlonkVerifier of PVerifier {
             && PlonkVerifier::check_public_inputs_length(
                 verification_key.nPublic, publicSignals.len().into()
             );
-        let challenges: PlonkChallenge = PlonkVerifier::compute_challenges(
+        let mut challenges: PlonkChallenge = PlonkVerifier::compute_challenges(
             verification_key, proof, publicSignals
         );
 
@@ -78,7 +79,14 @@ impl PlonkVerifier of PVerifier {
         verification_key: PlonkVerificationKey, proof: PlonkProof, publicSignals: Array<u256>
     ) -> PlonkChallenge {
         let mut challenges = PlonkChallenge {
-            beta: fq(0), gamma: fq(0), alpha: fq(0), xi: fq(0), v: array![], u: fq(0)
+            beta: fq(0),
+            gamma: fq(0),
+            alpha: fq(0),
+            xi: fq(0),
+            xin: fq(0),
+            zh: fq(0),
+            v: array![],
+            u: fq(0)
         };
 
         // Challenge round 2: beta and gamma
@@ -157,7 +165,42 @@ impl PlonkVerifier of PVerifier {
         challenges
     }
     // step 6: calculate the lagrange evaluations
-    fn calculate_lagrange_evaluations() {}
+    fn calculate_lagrange_evaluations(
+        verification_key: PlonkVerificationKey, mut challenges: PlonkChallenge
+    ) -> Array<Fq> {
+        let mut xin = challenges.xi;
+        let mut domain_size = 1;
+
+        let mut i = 0;
+        while i < verification_key.power {
+            xin = xin.sqr();
+            domain_size *= 2;
+            i += 1;
+        };
+        challenges.xin = xin;
+        challenges.zh = xin.sub(fq(1));
+
+        let mut lagrange_evaluations = array![];
+        lagrange_evaluations.append(fq(0));
+        let n: Fq = fq(domain_size);
+        let mut w: Fq = FqUtils::one();
+
+        let mut j = 1;
+        while j <= max(1, verification_key.nPublic) {
+            let mut xi_sub_w = challenges.xi.sub(w);
+            let mut xi_mul_n = xi_sub_w.mul(n);
+            let mut w_mul_zh = w.mul(challenges.zh);
+            let mut div = w_mul_zh.div(xi_mul_n);
+            lagrange_evaluations.append(div);
+
+            // roots of unity check, need to fix
+            w = w.mul(fq(verification_key.power));
+
+            j += 1;
+        };
+
+        lagrange_evaluations
+    }
 }
 
 
