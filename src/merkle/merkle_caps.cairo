@@ -1,3 +1,4 @@
+use core::traits::TryInto;
 use core::clone::Clone;
 use core::array::ArrayTrait;
 use core::array::Span;
@@ -59,6 +60,7 @@ impl MerkleTreeImpl of MerkleTreeTrait {
     fn new(leaves: Array<Goldilocks>, cap_size: usize) -> MerkleTree {
         let num_leaves = leaves.len();
         let mut digests: Array<Goldilocks> = array![];
+        let mut cap: Array<Goldilocks> = array![];
 
         // Populate the leaves and compute hashes for internal nodes
         let mut i = 0;
@@ -74,58 +76,78 @@ impl MerkleTreeImpl of MerkleTreeTrait {
             i += 2;
         };
 
-        // Compute subsequent levels
+        // initial level size is half the number of leaves since each pair of leaves is hashed to one internal node
         let mut level_size = num_leaves / 2;
+        // index of the first node in the current level in the digests array
         let mut start_idx = 0;
 
-        while level_size
-            / 2 > cap_size {
-                i = 0;
-                while i < level_size {
-                    let hash_val = hash_n_to_m_no_pad(
-                        array![*digests[start_idx + i], *digests[start_idx + i + 1]].span(), 1
-                    )[0];
+        // compute the next levels of internal nodes
+        loop {
+            i = 0;
+            // loop through the current level of internal nodes and compute hash(l, r) for each pair of nodes
+            while i < level_size {
+                let hash_val = hash_n_to_m_no_pad(
+                    array![*digests[start_idx + i], *digests[start_idx + i + 1]].span(), 1
+                )[0];
+                if (level_size / 2 == cap_size) {
+                    // cap is the next level - which means we no longer need to store 
+                    // the hashes of the level being computed in cap instead of digests
+                    cap.append(*hash_val);
+                } else {
                     digests.append(*hash_val);
-                    i += 2;
-                    println!("added {}", level_size);
-                };
-                start_idx += level_size;
-                level_size /= 2;
-            };
-
-        let mut cap: Array<Goldilocks> = array![];
-        let d = digests.clone();
-
-        let mut i = start_idx;
-        while cap
-            .len() < cap_size {
-                let hash_val = hash_n_to_m_no_pad(array![*d[i], *d[i + 1]].span(), 1)[0];
-                cap.append(*hash_val);
+                }
                 i += 2;
             };
+
+            start_idx += level_size;
+            level_size /= 2;
+
+            if level_size == cap_size {
+                break;
+            }
+        };
 
         MerkleTree { leaves: leaves, digests: digests, cap: MerkleCaps { data: cap } }
     }
 
     fn prove(self: @MerkleTree, index: usize) -> Array<Goldilocks> {
+        // levels from the root to the cap level
+        let cap_height = self.cap.height();
+
+        // includes the sibling of the leaf and the siblings of the nodes on the path to the cap level
         let mut proof: Array<Goldilocks> = array![];
         let mut i = index;
-        let mut level_size = self.leaves.len();
-        let mut start_idx = 0;
 
-        while level_size
-            / 2 > self
-                .cap
-                .len() {
-                    if i % 2 == 1 {
-                        proof.append(*self.digests[start_idx + i - 1]);
-                    } else if i < level_size - 1 {
-                        proof.append(*self.digests[start_idx + i + 1]);
-                    };
-                    i = i / 2;
-                    start_idx += level_size;
-                    level_size /= 2;
-                };
+        // add sibling of leaf to proof
+        if i % 2 == 0 {
+            proof.append(*self.leaves[i + 1]);
+        } else {
+            proof.append(*self.leaves[i - 1]);
+        };
+
+        // initialize to max number of levels in a normal merkle proof
+        let mut remaining_levels = log2_strict(self.leaves.len())
+            - 1; // -1 to account for the level of the leaf
+        let mut level_size = self.leaves.len() / 2;
+        let mut start_idx = 0; // index of the first node in the current level in the digests array
+        // add siblings of nodes on the path to the cap to proof
+        loop {
+            if remaining_levels == cap_height { // reached the cap level, no need to calculate up to the root
+                break;
+            }
+
+            i = i / 2; // parent index
+            if i % 2 == 0 { // left child
+                proof.append(*self.digests[start_idx + i + 1]);
+            } else {
+                proof.append(*self.digests[start_idx + i - 1]);
+            };
+
+            // move to the next level
+            start_idx += level_size;
+            level_size /= 2;
+            remaining_levels -= 1;
+        };
 
         proof
     }
@@ -141,9 +163,24 @@ fn log2_strict(x: usize) -> usize {
     y
 }
 
+fn power(base: u64, exponent: u64) -> u64 {
+    let mut result = 1;
+    let mut exp = exponent;
+    let mut b = base;
+    while exp > 0 {
+        if exp % 2 == 1 {
+            result = result * b;
+        }
+        exp /= 2;
+        b = b * b;
+    };
+    result
+}
+
 #[cfg(test)]
 mod tests {
-    use super::{gl, MerkleTreeImpl};
+    use core::traits::Into;
+    use super::{gl, MerkleTreeImpl, MerkleCapsImpl};
 
     #[test]
     fn test_init() {
@@ -159,6 +196,6 @@ mod tests {
         let cap_size = 2;
         let tree = MerkleTreeImpl::new(leaves, cap_size);
         let proof = tree.prove(0);
-        assert_eq!(proof.len(), 1);
+        assert_eq!(proof.len(), 2);
     }
 }
