@@ -10,6 +10,8 @@ use plonky2_verifier::fields::goldilocks::GoldilocksTrait;
 use plonky2_verifier::fields::goldilocks::{Goldilocks, gl};
 use plonky2_verifier::hash::poseidon::hash_n_to_m_no_pad;
 
+/// The Merkle cap of height `h` of a Merkle tree is the `h`-th layer (from the root) of the tree.
+/// It can be used in place of the root to verify Merkle paths, which are `h` elements shorter.
 #[derive(Drop, Debug)]
 pub struct MerkleCaps {
     pub data: Array<Goldilocks>
@@ -41,8 +43,9 @@ impl MerkleCapsImpl of MerkleCapsTrait {
 
 #[derive(Drop, Debug)]
 pub struct MerkleTree {
-    pub leaves: Span<Goldilocks>,
-    pub digests: Span<Goldilocks>,
+    /// The data in the leaves of the Merkle tree.
+    pub leaves: Array<Goldilocks>,
+    pub digests: Array<Goldilocks>,
     pub cap: MerkleCaps,
 }
 
@@ -50,9 +53,7 @@ pub struct MerkleTree {
 #[generate_trait]
 impl MerkleTreeImpl of MerkleTreeTrait {
     fn default() -> MerkleTree {
-        MerkleTree {
-            leaves: array![].span(), digests: array![].span(), cap: MerkleCapsImpl::default(),
-        }
+        MerkleTree { leaves: array![], digests: array![], cap: MerkleCapsImpl::default(), }
     }
 
     fn new(leaves: Array<Goldilocks>, cap_size: usize) -> MerkleTree {
@@ -103,7 +104,30 @@ impl MerkleTreeImpl of MerkleTreeTrait {
                 i += 2;
             };
 
-        MerkleTree { leaves: leaves.span(), digests: digests.span(), cap: MerkleCaps { data: cap } }
+        MerkleTree { leaves: leaves, digests: digests, cap: MerkleCaps { data: cap } }
+    }
+
+    fn prove(self: @MerkleTree, index: usize) -> Array<Goldilocks> {
+        let mut proof: Array<Goldilocks> = array![];
+        let mut i = index;
+        let mut level_size = self.leaves.len();
+        let mut start_idx = 0;
+
+        while level_size
+            / 2 > self
+                .cap
+                .len() {
+                    if i % 2 == 1 {
+                        proof.append(*self.digests[start_idx + i - 1]);
+                    } else if i < level_size - 1 {
+                        proof.append(*self.digests[start_idx + i + 1]);
+                    };
+                    i = i / 2;
+                    start_idx += level_size;
+                    level_size /= 2;
+                };
+
+        proof
     }
 }
 
@@ -127,5 +151,14 @@ mod tests {
         let cap_size = 2;
         let tree = MerkleTreeImpl::new(leaves, cap_size);
         assert_eq!(tree.leaves.len(), 8);
+    }
+
+    #[test]
+    fn test_prove() {
+        let leaves = array![gl(1), gl(2), gl(3), gl(4), gl(5), gl(6), gl(7), gl(8)];
+        let cap_size = 2;
+        let tree = MerkleTreeImpl::new(leaves, cap_size);
+        let proof = tree.prove(0);
+        assert_eq!(proof.len(), 1);
     }
 }
