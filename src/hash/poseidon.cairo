@@ -303,7 +303,7 @@ fn max(a: usize, b: usize) -> usize {
     }
 }
 
-pub fn hash_n_to_m_no_pad(inputs: Span<Goldilocks>, num_outputs: usize,) -> Span<Goldilocks> {
+pub fn hash_n_to_m_no_pad(inputs: Span<Goldilocks>, num_outputs: usize) -> Span<Goldilocks> {
     let mut perm = Permuter::default();
 
     // Absorb all input chunks.
