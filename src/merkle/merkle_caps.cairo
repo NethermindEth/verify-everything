@@ -18,6 +18,16 @@ pub struct MerkleCaps {
     pub data: Array<Goldilocks>
 }
 
+/// helper function to calculate the log base 2 of a number
+fn log2_strict(x: usize) -> usize {
+    let mut y = 0;
+    let mut z = x;
+    while z > 1 {
+        z = z / 2;
+        y = y + 1;
+    };
+    y
+}
 
 #[generate_trait]
 impl MerkleCapsImpl of MerkleCapsTrait {
@@ -39,6 +49,28 @@ impl MerkleCapsImpl of MerkleCapsTrait {
 
     fn flatten(self: @MerkleCaps) -> Array<Goldilocks> {
         self.data.clone()
+    }
+
+    fn verify(
+        self: @MerkleCaps, index: usize, leaf: Goldilocks, proof: Array<Goldilocks>,
+    ) -> bool {
+        let mut node = leaf;
+        let mut index = index;
+
+        let mut i = 0;
+        while i < proof
+            .len() {
+                let sibling = *proof[i];
+                if index % 2 == 0 {
+                    node = *hash_n_to_m_no_pad(array![node, sibling].span(), 1)[0];
+                } else {
+                    node = *hash_n_to_m_no_pad(array![sibling, node].span(), 1)[0];
+                }
+                index /= 2;
+                i += 1;
+            };
+
+        node == *self.data[index]
     }
 }
 
@@ -111,9 +143,6 @@ impl MerkleTreeImpl of MerkleTreeTrait {
     }
 
     fn prove(self: @MerkleTree, index: usize) -> Array<Goldilocks> {
-        // levels from the root to the cap level
-        let cap_height = self.cap.height();
-
         // includes the sibling of the leaf and the siblings of the nodes on the path to the cap level
         let mut proof: Array<Goldilocks> = array![];
         let mut i = index;
@@ -125,11 +154,14 @@ impl MerkleTreeImpl of MerkleTreeTrait {
             proof.append(*self.leaves[i - 1]);
         };
 
+        // levels from the root to the cap level
+        let cap_height = self.cap.height();
         // initialize to max number of levels in a normal merkle proof
         let mut remaining_levels = log2_strict(self.leaves.len())
             - 1; // -1 to account for the level of the leaf
         let mut level_size = self.leaves.len() / 2;
         let mut start_idx = 0; // index of the first node in the current level in the digests array
+
         // add siblings of nodes on the path to the cap to proof
         loop {
             if remaining_levels == cap_height { // reached the cap level, no need to calculate up to the root
@@ -153,32 +185,10 @@ impl MerkleTreeImpl of MerkleTreeTrait {
     }
 }
 
-fn log2_strict(x: usize) -> usize {
-    let mut y = 0;
-    let mut z = x;
-    while z > 1 {
-        z = z / 2;
-        y = y + 1;
-    };
-    y
-}
-
-fn power(base: u64, exponent: u64) -> u64 {
-    let mut result = 1;
-    let mut exp = exponent;
-    let mut b = base;
-    while exp > 0 {
-        if exp % 2 == 1 {
-            result = result * b;
-        }
-        exp /= 2;
-        b = b * b;
-    };
-    result
-}
 
 #[cfg(test)]
 mod tests {
+    use plonky2_verifier::merkle::merkle_caps::MerkleCapsTrait;
     use core::traits::Into;
     use super::{gl, MerkleTreeImpl, MerkleCapsImpl};
 
@@ -188,6 +198,8 @@ mod tests {
         let cap_size = 2;
         let tree = MerkleTreeImpl::new(leaves, cap_size);
         assert_eq!(tree.leaves.len(), 8);
+        assert_eq!(tree.digests.len(), 4);
+        assert_eq!(tree.cap.len(), 2);
     }
 
     #[test]
@@ -197,5 +209,45 @@ mod tests {
         let tree = MerkleTreeImpl::new(leaves, cap_size);
         let proof = tree.prove(0);
         assert_eq!(proof.len(), 2);
+    }
+
+    #[test]
+    fn test_should_verify_valid_proof() {
+        let leaves = array![gl(1), gl(2), gl(3), gl(4), gl(5), gl(6), gl(7), gl(8)];
+        let cap_size = 2;
+        let tree = MerkleTreeImpl::new(leaves, cap_size);
+        let proof = tree.prove(5);
+        let verified = tree.cap.verify(5, gl(6), proof);
+        assert_eq!(verified, true);
+    }
+
+    #[test]
+    fn test_should_verify_valid_proof2() {
+        let leaves = array![gl(1), gl(2), gl(3), gl(4), gl(5), gl(6), gl(7), gl(8)];
+        let cap_size = 2;
+        let tree = MerkleTreeImpl::new(leaves, cap_size);
+        let proof = tree.prove(1); // index of 1
+        let verified = tree.cap.verify(1, gl(2), proof);
+        assert_eq!(verified, true);
+    }
+
+    #[test]
+    fn test_should_not_verify_invalid_proof() {
+        let leaves = array![gl(1), gl(2), gl(3), gl(4), gl(5), gl(6), gl(7), gl(8)];
+        let cap_size = 2;
+        let tree = MerkleTreeImpl::new(leaves, cap_size);
+        let proof = tree.prove(5);
+        let verified = tree.cap.verify(5, gl(7), proof);
+        assert_eq!(verified, false);
+    }
+
+    #[test]
+    fn test_should_verify_valid_proof_with_cap_1() {
+        let leaves = array![gl(1), gl(2), gl(3), gl(4), gl(5), gl(6), gl(7), gl(8)];
+        let cap_size = 1;
+        let tree = MerkleTreeImpl::new(leaves, cap_size);
+        let proof = tree.prove(1); // index of 1
+        let verified = tree.cap.verify(1, gl(2), proof);
+        assert_eq!(verified, true);
     }
 }
