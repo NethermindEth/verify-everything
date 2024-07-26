@@ -10,3 +10,4 @@ The initial list of potential verifiers will be as follows:
 2. halo2 (KZG)
 3. Plonky2
 4. Plonk
+
