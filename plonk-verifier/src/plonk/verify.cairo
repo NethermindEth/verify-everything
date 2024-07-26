@@ -1,18 +1,19 @@
+use core::fmt::Display;
 use core::traits::Destruct;
 use core::clone::Clone;
 use core::traits::Into;
+use core::debug::{PrintTrait, print_byte_array_as_string};
 use core::array::ArrayTrait;
 use core::cmp::max;
 
 use plonk_verifier::traits::FieldMulShortcuts;
 use plonk_verifier::plonk::transcript::Keccak256Transcript;
-use plonk_verifier::traits::{FieldOps as FOps, FieldShortcuts as FShort};
 use plonk_verifier::curve::groups::{g1, g2, AffineG1, AffineG2};
 use plonk_verifier::curve::groups::ECOperations;
 use plonk_verifier::fields::{fq, Fq, fq2, Fq2, FqOps, FqUtils};
 use plonk_verifier::curve::constants::{ORDER};
 use plonk_verifier::plonk::types::{PlonkProof, PlonkVerificationKey, PlonkChallenge};
-use plonk_verifier::plonk::transcript::{Transcript};
+use plonk_verifier::plonk::transcript::{Transcript, TranscriptElement};
 
 #[generate_trait]
 impl PlonkVerifier of PVerifier {
@@ -21,29 +22,29 @@ impl PlonkVerifier of PVerifier {
     ) -> bool {
         let mut result = true;
         result = result
-            && PlonkVerifier::is_on_curve(proof.A)
-            && PlonkVerifier::is_on_curve(proof.B)
-            && PlonkVerifier::is_on_curve(proof.C)
-            && PlonkVerifier::is_on_curve(proof.Z)
-            && PlonkVerifier::is_on_curve(proof.T1)
-            && PlonkVerifier::is_on_curve(proof.T2)
-            && PlonkVerifier::is_on_curve(proof.T3)
-            && PlonkVerifier::is_on_curve(proof.Wxi)
-            && PlonkVerifier::is_on_curve(proof.Wxiw);
+            && Self::is_on_curve(proof.A)
+            && Self::is_on_curve(proof.B)
+            && Self::is_on_curve(proof.C)
+            && Self::is_on_curve(proof.Z)
+            && Self::is_on_curve(proof.T1)
+            && Self::is_on_curve(proof.T2)
+            && Self::is_on_curve(proof.T3)
+            && Self::is_on_curve(proof.Wxi)
+            && Self::is_on_curve(proof.Wxiw);
 
         result = result
-            && PlonkVerifier::is_in_field(proof.eval_a)
-            && PlonkVerifier::is_in_field(proof.eval_b)
-            && PlonkVerifier::is_in_field(proof.eval_c)
-            && PlonkVerifier::is_in_field(proof.eval_s1)
-            && PlonkVerifier::is_in_field(proof.eval_s2)
-            && PlonkVerifier::is_in_field(proof.eval_zw);
+            && Self::is_in_field(proof.eval_a)
+            && Self::is_in_field(proof.eval_b)
+            && Self::is_in_field(proof.eval_c)
+            && Self::is_in_field(proof.eval_s1)
+            && Self::is_in_field(proof.eval_s2)
+            && Self::is_in_field(proof.eval_zw);
 
         result = result
-            && PlonkVerifier::check_public_inputs_length(
+            && Self::check_public_inputs_length(
                 verification_key.nPublic, publicSignals.len().into()
             );
-        let mut challenges: PlonkChallenge = PlonkVerifier::compute_challenges(
+        let mut _challenges: PlonkChallenge = Self::compute_challenges(
             verification_key, proof, publicSignals
         );
 
@@ -63,13 +64,14 @@ impl PlonkVerifier of PVerifier {
 
     // step 2: check if the field element is in the field
     fn is_in_field(num: Fq) -> bool {
-        // bn254 curve field: 21888242871839275222246405745257275088548364400416034343698204186575808495617
+        // bn254 curve field:
+        // 21888242871839275222246405745257275088548364400416034343698204186575808495617
         let field_p = fq(ORDER);
 
         num.c0 < field_p.c0
     }
 
-    //step 3: check proof public inputs match the verification key 
+    //step 3: check proof public inputs match the verification key
     fn check_public_inputs_length(len_a: u256, len_b: u256) -> bool {
         len_a == len_b
     }
@@ -92,6 +94,14 @@ impl PlonkVerifier of PVerifier {
         // Challenge round 2: beta and gamma
         let mut beta_transcript = Transcript::new();
         beta_transcript.add_pol_commitment(verification_key.Qm);
+        let c = beta_transcript.data.at(0);
+        match c {
+            TranscriptElement::Polynomial(_pt) => { // println!("ts x: {:?}", pt.x.c0.clone());
+            // println!("ts y: {:?}", pt.y.c0.clone());
+            },
+            TranscriptElement::Scalar(s) => { println!("ts x: {:?}", s); },
+        };
+
         beta_transcript.add_pol_commitment(verification_key.Ql);
         beta_transcript.add_pol_commitment(verification_key.Qr);
         beta_transcript.add_pol_commitment(verification_key.Qo);
@@ -101,16 +111,17 @@ impl PlonkVerifier of PVerifier {
         beta_transcript.add_pol_commitment(verification_key.S3);
 
         let mut i = 0;
-        while i < publicSignals
-            .len() {
-                beta_transcript.add_scalar(fq(publicSignals.at(i).clone()));
-                i += 1;
-            };
+        while i < publicSignals.len() {
+            beta_transcript.add_scalar(fq(publicSignals.at(i).clone()));
+            i += 1;
+        };
         beta_transcript.add_pol_commitment(proof.A);
         beta_transcript.add_pol_commitment(proof.B);
         beta_transcript.add_pol_commitment(proof.C);
 
         challenges.beta = beta_transcript.get_challenge();
+        let mut _challenges_beta = challenges.beta.c0.clone();
+        // println!("challenges beta: {:?}", challenges_beta);
 
         let mut gamma_transcript = Transcript::new();
         gamma_transcript.add_scalar(challenges.beta);
@@ -200,53 +211,5 @@ impl PlonkVerifier of PVerifier {
         };
 
         lagrange_evaluations
-    }
-}
-
-
-#[cfg(test)]
-mod tests {
-    use super::PlonkVerifier;
-    use core::traits::Into;
-    use core::traits::RemEq;
-
-    use plonk_verifier::curve::groups::{g1, g2, AffineG1, AffineG2};
-    #[test]
-    fn test_is_on_curve() {
-        let pt_on_curve = g1(
-            4693417943536520268746058560989260808135478372449023987176805259899316401080,
-            8186764010206899711756657704517859444555824539207093839904632766037261603989
-        );
-        let pt_not_on_curve = g1(
-            4693417943536520268746058560989260808135478372449023987176805259899316401080,
-            8186764010206899711756657704517859444555824539207093839904632766037261603987
-        );
-        assert_eq!(PlonkVerifier::is_on_curve(pt_on_curve), true);
-        assert_eq!(PlonkVerifier::is_on_curve(pt_not_on_curve), false);
-    }
-
-    use plonk_verifier::curve::constants::{ORDER};
-    use plonk_verifier::fields::{fq, Fq};
-
-    #[test]
-    fn test_is_in_field() {
-        let num_in_field = fq(
-            12414878641105079363695639132995965092423960984837736008191365473346709965275
-        );
-        let num_not_in_field = fq(
-            31888242871839275222246405745257275088548364400416034343698204186575808495617
-        );
-        assert_eq!(PlonkVerifier::is_in_field(num_in_field), true);
-        assert_eq!(PlonkVerifier::is_in_field(num_not_in_field), false);
-    }
-
-    #[test]
-    fn test_check_public_inputs_length() {
-        let len_a = 5;
-        let len_b = 5;
-        let len_c = 6;
-
-        assert_eq!(PlonkVerifier::check_public_inputs_length(len_a, len_b), true);
-        assert_eq!(PlonkVerifier::check_public_inputs_length(len_a, len_c), false);
     }
 }

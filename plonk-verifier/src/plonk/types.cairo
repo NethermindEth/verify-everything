@@ -2,6 +2,13 @@ use core::array::ArrayTrait;
 use core::traits::Into;
 use plonk_verifier::curve::groups::{AffineG1, AffineG2};
 use plonk_verifier::fields::{Fq};
+use core::fmt::{Display, Formatter, Error};
+
+// #[derive(Default, Drop)]
+// pub struct Formatter {
+//     /// The pending result of formatting.
+//     pub buffer: ByteArray,
+// }
 
 #[derive(Copy, Drop)]
 struct PlonkProof {

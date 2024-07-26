@@ -1,6 +1,3 @@
-// These mod functions are heavily optimised for < 255 bit numbers
-// and may break for full 256 bit numbers
-
 use integer::u512;
 
 // util functions

@@ -1,5 +1,8 @@
+use core::traits::TryInto;
 use plonk_verifier::curve::{FIELD, get_field_nz, add, sub, mul, scl, sqr, div, neg, inv};
-use plonk_verifier::curve::{add_u, sub_u, mul_u, sqr_u, scl_u, u512_reduce, u512_add_u256, u512_sub_u256};
+use plonk_verifier::curve::{
+    add_u, sub_u, mul_u, sqr_u, scl_u, u512_reduce, u512_add_u256, u512_sub_u256
+};
 use integer::u512;
 use plonk_verifier::fields::fq_generics::{TFqAdd, TFqSub, TFqMul, TFqDiv, TFqNeg, TFqPartialEq,};
 use plonk_verifier::traits::{FieldUtils, FieldOps, FieldShortcuts, FieldMulShortcuts};

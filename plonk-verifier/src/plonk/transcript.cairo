@@ -1,12 +1,17 @@
 use core::clone::Clone;
 use core::traits::Into;
-use plonk_verifier::traits::FieldMulShortcuts;
 use core::array::SpanTrait;
-use core::array::ArrayTrait;
+// use core::array::ArrayTrait;
 use core::traits::Destruct;
 use core::keccak;
+use core::byte_array::ByteArrayTrait;
+use core::to_byte_array::{FormatAsByteArray, AppendFormattedToByteArray};
+use core::fmt::{Display, Formatter, Error};
+use debug::PrintTrait;
+
 use plonk_verifier::curve::groups::{g1, g2, AffineG1, AffineG2};
 use plonk_verifier::fields::{fq, Fq, fq2, Fq2, FqIntoU256};
+use plonk_verifier::traits::FieldMulShortcuts;
 
 #[derive(Drop)]
 pub struct PlonkTranscript {
@@ -45,26 +50,34 @@ impl Transcript of Keccak256Transcript<PlonkTranscript> {
             panic!("Keccak256Transcript: No data to generate a transcript");
         }
 
-        let mut buffer = ArrayTrait::<u256>::new();
-        let mut i = 0;
-        while i < self
-            .data
-            .len() {
-                match self.data.at(i) {
-                    TranscriptElement::Polynomial(pt) => {
-                        let x = pt.x;
-                        let y = pt.y;
-                        buffer.append(FqIntoU256::into(x.clone()));
-                        buffer.append(FqIntoU256::into(y.clone()));
-                    },
-                    TranscriptElement::Scalar(scalar) => {
-                        buffer.append(FqIntoU256::into(scalar.clone()));
-                    },
-                };
-                i += 1;
-            };
+        let mut buffer: ByteArray = "";
 
-        let value = keccak::keccak_u256s_be_inputs(buffer.span());
+        let mut i = 0;
+        while i < self.data.len() {
+            let hex_base: NonZero<u256> = 16_u256.try_into().unwrap();
+            match self.data.at(i) {
+                TranscriptElement::Polynomial(pt) => {
+                    let x = pt.x.c0;
+                    let y = pt.y.c0;
+                    let u256x = x.clone();
+                    let u256y = y.clone();
+
+                    let ba_x = u256x.format_as_byte_array(hex_base);
+                    let ba_y = u256y.format_as_byte_array(hex_base);
+                    buffer.append(@ba_x);
+                    buffer.append(@ba_y);
+                },
+                TranscriptElement::Scalar(scalar) => {
+                    let s = scalar.c0.clone();
+                    let ba_s = s.format_as_byte_array(hex_base);
+                    buffer.append(@ba_s);
+                },
+                // println!("buffer: {:?}", @buffer);
+            };
+            i += 1;
+        };
+
+        let value = keccak::compute_keccak_byte_array(@buffer);
         fq(value)
     }
 }
