@@ -190,13 +190,15 @@ impl MerkleTreeImpl of MerkleTreeTrait {
 mod tests {
     use plonky2_verifier::merkle::merkle_caps::MerkleCapsTrait;
     use core::traits::Into;
-    use super::{gl, MerkleTreeImpl, MerkleCapsImpl};
+    use super::{gl, MerkleTreeImpl, MerkleCapsImpl, MerkleTree};
+
+    fn make_sample_tree() -> MerkleTree {
+        MerkleTreeImpl::new(array![gl(1), gl(2), gl(3), gl(4), gl(5), gl(6), gl(7), gl(8)], 2)
+    }
 
     #[test]
     fn test_init() {
-        let leaves = array![gl(1), gl(2), gl(3), gl(4), gl(5), gl(6), gl(7), gl(8)];
-        let cap_size = 2;
-        let tree = MerkleTreeImpl::new(leaves, cap_size);
+        let tree = make_sample_tree();
         assert_eq!(tree.leaves.len(), 8);
         assert_eq!(tree.digests.len(), 4);
         assert_eq!(tree.cap.len(), 2);
@@ -204,18 +206,14 @@ mod tests {
 
     #[test]
     fn test_prove() {
-        let leaves = array![gl(1), gl(2), gl(3), gl(4), gl(5), gl(6), gl(7), gl(8)];
-        let cap_size = 2;
-        let tree = MerkleTreeImpl::new(leaves, cap_size);
+        let tree = make_sample_tree();
         let proof = tree.prove(0);
         assert_eq!(proof.len(), 2);
     }
 
     #[test]
     fn test_should_verify_valid_proof() {
-        let leaves = array![gl(1), gl(2), gl(3), gl(4), gl(5), gl(6), gl(7), gl(8)];
-        let cap_size = 2;
-        let tree = MerkleTreeImpl::new(leaves, cap_size);
+        let tree = make_sample_tree();
         let proof = tree.prove(5);
         let verified = tree.cap.verify(5, gl(6), proof);
         assert_eq!(verified, true);
@@ -223,9 +221,7 @@ mod tests {
 
     #[test]
     fn test_should_verify_valid_proof2() {
-        let leaves = array![gl(1), gl(2), gl(3), gl(4), gl(5), gl(6), gl(7), gl(8)];
-        let cap_size = 2;
-        let tree = MerkleTreeImpl::new(leaves, cap_size);
+        let tree = make_sample_tree();
         let proof = tree.prove(1); // index of 1
         let verified = tree.cap.verify(1, gl(2), proof);
         assert_eq!(verified, true);
@@ -233,9 +229,7 @@ mod tests {
 
     #[test]
     fn test_should_not_verify_invalid_proof() {
-        let leaves = array![gl(1), gl(2), gl(3), gl(4), gl(5), gl(6), gl(7), gl(8)];
-        let cap_size = 2;
-        let tree = MerkleTreeImpl::new(leaves, cap_size);
+        let tree = make_sample_tree();
         let proof = tree.prove(5);
         let verified = tree.cap.verify(5, gl(7), proof);
         assert_eq!(verified, false);
