@@ -94,14 +94,6 @@ impl PlonkVerifier of PVerifier {
         // Challenge round 2: beta and gamma
         let mut beta_transcript = Transcript::new();
         beta_transcript.add_pol_commitment(verification_key.Qm);
-        let c = beta_transcript.data.at(0);
-        match c {
-            TranscriptElement::Polynomial(_pt) => { // println!("ts x: {:?}", pt.x.c0.clone());
-            // println!("ts y: {:?}", pt.y.c0.clone());
-            },
-            TranscriptElement::Scalar(s) => { println!("ts x: {:?}", s); },
-        };
-
         beta_transcript.add_pol_commitment(verification_key.Ql);
         beta_transcript.add_pol_commitment(verification_key.Qr);
         beta_transcript.add_pol_commitment(verification_key.Qo);
@@ -120,8 +112,6 @@ impl PlonkVerifier of PVerifier {
         beta_transcript.add_pol_commitment(proof.C);
 
         challenges.beta = beta_transcript.get_challenge();
-        let mut challenges_beta = challenges.beta.c0.clone();
-        println!("challenges beta: {:?}", challenges_beta);
 
         let mut gamma_transcript = Transcript::new();
         gamma_transcript.add_scalar(challenges.beta);

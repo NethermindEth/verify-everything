@@ -67,7 +67,6 @@ fn set_01234() -> (Fq12, Fq12Sparse01234) {
 }
 
 #[test]
-#[available_gas(200000000)]
 fn s01_mul_01() {
     let field_nz = get_field_nz();
     let (Fq12 { c0: _, c1: a }, a_s) = set_a();
@@ -80,7 +79,6 @@ fn s01_mul_01() {
 }
 
 #[test]
-#[available_gas(200000000)]
 fn fq6_mul_01() {
     let field_nz = get_field_nz();
     let (Fq12 { c0: _, c1: a }, a_s) = set_a();
@@ -97,7 +95,6 @@ fn fq6_mul_01() {
 }
 
 #[test]
-#[available_gas(200000000)]
 fn s034_sqr() {
     let field_nz = get_field_nz();
     let (_, a) = set_a();
@@ -105,7 +102,6 @@ fn s034_sqr() {
 }
 
 #[test]
-#[available_gas(200000000)]
 fn s034_mul_034() {
     let field_nz = get_field_nz();
     let (a, a_s) = set_a();
@@ -123,7 +119,6 @@ fn s034_mul_034() {
 }
 
 #[test]
-#[available_gas(200000000)]
 fn fq12_mul_034() {
     let field_nz = get_field_nz();
     let a = a_12();
@@ -136,7 +131,6 @@ fn fq12_mul_034() {
 }
 
 #[test]
-#[available_gas(200000000)]
 fn s01234_mul_034() {
     let field_nz = get_field_nz();
     let (a, a_s) = set_01234();
@@ -150,7 +144,6 @@ fn s01234_mul_034() {
 }
 
 #[test]
-#[available_gas(200000000)]
 fn fq12_mul_01234() {
     let field_nz = get_field_nz();
     let a = a_12();
@@ -163,7 +156,6 @@ fn fq12_mul_01234() {
 }
 
 #[test]
-#[available_gas(20000000)]
 fn miller_test_034_034_fq12() {
     let field_nz = get_field_nz();
     let (_a, a) = set_a();
@@ -172,7 +164,6 @@ fn miller_test_034_034_fq12() {
 }
 
 #[test]
-#[available_gas(20000000)]
 fn miller_test_s034_fq12_x2() {
     let field_nz = get_field_nz();
     let (_a, a) = set_a();

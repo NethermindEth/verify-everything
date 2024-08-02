@@ -56,7 +56,6 @@ impl Transcript of Keccak256Transcript<PlonkTranscript> {
         let mut i = 0;
 
         while i < self.data.len() {
-            println!("i {:?}", i);
             match self.data.at(i) {
                 TranscriptElement::Polynomial(pt) => {
                     let x = pt.x.c0.clone();
@@ -68,7 +67,9 @@ impl Transcript of Keccak256Transcript<PlonkTranscript> {
                 },
                 TranscriptElement::Scalar(scalar) => {
                     let s: u256 = scalar.c0.clone();
+                    println!("s: {}", s);
                     let mut s_bytes: ByteArray = decimal_to_byte_array(s);
+                    println!("s_bytes: {:?}", s_bytes);
                     buffer.append(@s_bytes);
                 },
             };
@@ -76,7 +77,9 @@ impl Transcript of Keccak256Transcript<PlonkTranscript> {
         };
 
         let le_value = keccak::compute_keccak_byte_array(@buffer);
+        println!("le_value: {}", le_value);
         let be_value = convert_le_to_be(le_value);
+        println!("be_value: {}", be_value);
         let be_u256: u256 = hex_to_decimal(be_value);
 
         fq(be_u256 % ORDER)

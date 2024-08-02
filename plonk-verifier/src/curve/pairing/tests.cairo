@@ -38,7 +38,6 @@ fn pair_result() -> Fq12 {
 }
 
 #[test]
-#[available_gas(99999999999999)]
 fn miller() {
     let pair12 = tate_miller_loop(AffineG1Impl::one(), dbl_g2());
     assert(pair12 == pair_result(), 'incorrect pairing');
@@ -48,7 +47,9 @@ fn miller() {
 mod g1_line {
     use plonk_verifier::curve::pairing::miller_utils::LineEvaluationsTrait;
     use plonk_verifier::fields::{Fq12, Fq12Utils};
-    use plonk_verifier::fields::{print::Fq12PrintImpl, FieldUtils, FieldOps, fq, fq12, Fq, Fq2, Fq6};
+    use plonk_verifier::fields::{
+        print::Fq12PrintImpl, FieldUtils, FieldOps, fq, fq12, Fq, Fq2, Fq6
+    };
     use plonk_verifier::curve::groups::{Affine, AffineG1, AffineG2, AffineOps, g1, g2};
 
     fn p1() -> AffineG1 {
@@ -108,20 +109,17 @@ mod g1_line {
     }
 
     #[test]
-    #[available_gas(20000000)]
     fn tangent() {
         assert(q().at_tangent(p1()) == tangent_res(), 'incorrect tangent');
     }
 
     #[test]
-    #[available_gas(20000000)]
     fn chord() {
         assert(q().at_chord(p1(), p2()) == cord_res(), 'incorrect cord');
     }
 }
 
 #[test]
-#[available_gas(2000000000)]
 fn t_naf_verify() {
     let mut naf = plonk_verifier::curve::t_naf();
     let mut bit = 1_u128;

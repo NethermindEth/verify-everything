@@ -14,14 +14,12 @@ fn bi(limb3: u128, limb2: u128, limb1: u128, limb0: u128) -> u512 {
 }
 
 #[test]
-#[available_gas(2000000)]
 fn u512_basic() {
     assert(bi(0, f30f, 2, 3) + bi(4, 5, 6, 7) == bi(5, 4, 8, 10), 'wrong u512 add');
     assert(bi(4, 5, 6, 7) - bi(0, 1, 2, 3) == bi(4, 4, 4, 4), 'wrong u512 sub');
 }
 
 #[test]
-#[available_gas(20000000)]
 fn u512_add_overflow() {
     let field_nz = get_field_nz();
     let a = bi(
@@ -56,8 +54,8 @@ fn u512_add_overflow() {
     let c_large_reduced = u512_reduce(c_large, field_nz);
 
     // c mod FIELD should equal
-    // 0x1aaf5058fc22169aab801bc3b1de1f304adb8f0b3b0f6a86c348426baf4e97dea0201f9e8fbcd70bab11d6aa6ec78b6da67f7d52e44bfeb856509e548d946b9d1 mod FIELD
-    // = 0x62b58555709f7c875737862f99cf22dc374de2d9c2b4a847d0654732a1c2260
+    // 0x1aaf5058fc22169aab801bc3b1de1f304adb8f0b3b0f6a86c348426baf4e97dea0201f9e8fbcd70bab11d6aa6ec78b6da67f7d52e44bfeb856509e548d946b9d1
+    // mod FIELD = 0x62b58555709f7c875737862f99cf22dc374de2d9c2b4a847d0654732a1c2260
     let expect = 0x62b58555709f7c875737862f99cf22dc374de2d9c2b4a847d0654732a1c2260;
 
     assert(expect == c_reduced, 'wrong u512 add');
@@ -65,7 +63,6 @@ fn u512_add_overflow() {
 }
 
 #[test]
-#[available_gas(20000000)]
 fn u512_u256_add() {
     let field_nz = get_field_nz();
     let a = bi(FIELD.high, FIELD.low, FIELD.high, FIELD.low,); // a = 0 mod FIELD
@@ -82,11 +79,10 @@ fn u512_u256_add() {
 
     let a = bi(1, f30f, f30f, f30f,); // a = 0 mod FIELD
     assert(bi(2, 0, 0, 0,) == u512_add_u256(a, 1), 'u512_add_u256 mismatch');
-// assert(a_red - b.into(), '');
+    // assert(a_red - b.into(), '');
 }
 
 #[test]
-#[available_gas(20000000)]
 fn u512_u256_sub() {
     let field_nz = get_field_nz();
     let a = bi(FIELD.high, FIELD.low, FIELD.high, FIELD.low,); // a = 0 mod FIELD
@@ -107,7 +103,6 @@ fn u512_u256_sub() {
 
 
 #[test]
-#[available_gas(20000000)]
 fn u512_sub_overflow() {
     let field_nz = get_field_nz();
     let a = bi(
@@ -142,8 +137,8 @@ fn u512_sub_overflow() {
     let c_large_reduced = u512_reduce(c_large, field_nz);
 
     // c mod FIELD should equal
-    // -0x3e6b667755bc02dec82809fd86571695b4871922a5d824c765f6bf4759e593a0ffb6419032b6fc22cd5cd1a0ce35c8e8046d919dab19c6b8316f6a62d6f7eac1 mod FIELD
-    // = 0xa5ec6c44bcafb8a12eee3c8766b0ed6d149384a9d063b80933d2f7bbd1820ad
+    // -0x3e6b667755bc02dec82809fd86571695b4871922a5d824c765f6bf4759e593a0ffb6419032b6fc22cd5cd1a0ce35c8e8046d919dab19c6b8316f6a62d6f7eac1
+    // mod FIELD = 0xa5ec6c44bcafb8a12eee3c8766b0ed6d149384a9d063b80933d2f7bbd1820ad
     let expect = 0xa5ec6c44bcafb8a12eee3c8766b0ed6d149384a9d063b80933d2f7bbd1820ad;
 
     assert(expect == c_reduced, 'wrong u512 add');
