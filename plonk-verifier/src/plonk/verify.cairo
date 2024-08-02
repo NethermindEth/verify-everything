@@ -120,8 +120,8 @@ impl PlonkVerifier of PVerifier {
         beta_transcript.add_pol_commitment(proof.C);
 
         challenges.beta = beta_transcript.get_challenge();
-        let mut _challenges_beta = challenges.beta.c0.clone();
-        // println!("challenges beta: {:?}", challenges_beta);
+        let mut challenges_beta = challenges.beta.c0.clone();
+        println!("challenges beta: {:?}", challenges_beta);
 
         let mut gamma_transcript = Transcript::new();
         gamma_transcript.add_scalar(challenges.beta);

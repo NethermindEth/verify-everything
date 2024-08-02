@@ -19,7 +19,6 @@ const TPL_X: u256 = 335303128805953394265839088668306712404092077557553774714434
 const TPL_Y: u256 = 19321533766552368860946552437480515441416830039777911637913418824951667761761;
 
 #[cfg(test)]
-#[available_gas(100000000)]
 fn g1_dbl() {
     let doubled = AffineG1Impl::one().double();
     assert(doubled.x.c0 == DBL_X, 'wrong double x');
@@ -27,7 +26,6 @@ fn g1_dbl() {
 }
 
 #[cfg(test)]
-#[available_gas(100000000)]
 fn g1_add() {
     let g_3x = AffineG1Impl::one().add(g1(DBL_X, DBL_Y));
 

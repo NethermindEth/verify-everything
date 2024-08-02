@@ -1,17 +1,18 @@
+use core::traits::TryInto;
 use core::clone::Clone;
 use core::traits::Into;
-use core::array::SpanTrait;
-// use core::array::ArrayTrait;
 use core::traits::Destruct;
 use core::keccak;
 use core::byte_array::ByteArrayTrait;
 use core::to_byte_array::{FormatAsByteArray, AppendFormattedToByteArray};
 use core::fmt::{Display, Formatter, Error};
 use debug::PrintTrait;
+use plonk_verifier::curve::constants::{ORDER};
 
 use plonk_verifier::curve::groups::{g1, g2, AffineG1, AffineG2};
-use plonk_verifier::fields::{fq, Fq, fq2, Fq2, FqIntoU256};
+use plonk_verifier::fields::{fq, Fq, FqIntoU256};
 use plonk_verifier::traits::FieldMulShortcuts;
+use plonk_verifier::plonk::utils::{convert_le_to_be, hex_to_decimal, decimal_to_byte_array};
 
 #[derive(Drop)]
 pub struct PlonkTranscript {
@@ -53,31 +54,31 @@ impl Transcript of Keccak256Transcript<PlonkTranscript> {
         let mut buffer: ByteArray = "";
 
         let mut i = 0;
+
         while i < self.data.len() {
-            let hex_base: NonZero<u256> = 16_u256.try_into().unwrap();
+            println!("i {:?}", i);
             match self.data.at(i) {
                 TranscriptElement::Polynomial(pt) => {
-                    let x = pt.x.c0;
-                    let y = pt.y.c0;
-                    let u256x = x.clone();
-                    let u256y = y.clone();
-
-                    let ba_x = u256x.format_as_byte_array(hex_base);
-                    let ba_y = u256y.format_as_byte_array(hex_base);
-                    buffer.append(@ba_x);
-                    buffer.append(@ba_y);
+                    let x = pt.x.c0.clone();
+                    let y = pt.y.c0.clone();
+                    let mut x_bytes: ByteArray = decimal_to_byte_array(x);
+                    let mut y_bytes: ByteArray = decimal_to_byte_array(y);
+                    buffer.append(@x_bytes);
+                    buffer.append(@y_bytes);
                 },
                 TranscriptElement::Scalar(scalar) => {
-                    let s = scalar.c0.clone();
-                    let ba_s = s.format_as_byte_array(hex_base);
-                    buffer.append(@ba_s);
+                    let s: u256 = scalar.c0.clone();
+                    let mut s_bytes: ByteArray = decimal_to_byte_array(s);
+                    buffer.append(@s_bytes);
                 },
-                // println!("buffer: {:?}", @buffer);
             };
             i += 1;
         };
 
-        let value = keccak::compute_keccak_byte_array(@buffer);
-        fq(value)
+        let le_value = keccak::compute_keccak_byte_array(@buffer);
+        let be_value = convert_le_to_be(le_value);
+        let be_u256: u256 = hex_to_decimal(be_value);
+
+        fq(be_u256 % ORDER)
     }
 }

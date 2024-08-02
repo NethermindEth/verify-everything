@@ -3,6 +3,7 @@ mod plonk {
     mod constants;
     mod types;
     mod transcript;
+    mod utils;
     #[cfg(test)]
     mod plonk_tests;
 }
