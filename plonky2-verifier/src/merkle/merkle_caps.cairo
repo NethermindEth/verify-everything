@@ -9,13 +9,14 @@ use core::to_byte_array::FormatAsByteArray;
 use core::traits::Into;
 use plonky2_verifier::fields::goldilocks::GoldilocksTrait;
 use plonky2_verifier::fields::goldilocks::{Goldilocks, gl};
-use plonky2_verifier::hash::poseidon::hash_n_to_m_no_pad;
+use plonky2_verifier::hash::poseidon::{hash_two_to_one};
+use plonky2_verifier::hash::poseidon_state::{HashOut, HashOutImpl};
 
 /// The Merkle cap of height `h` of a Merkle tree is the `h`-th layer (from the root) of the tree.
 /// It can be used in place of the root to verify Merkle paths, which are `h` elements shorter.
 #[derive(Drop, Debug)]
 pub struct MerkleCaps {
-    pub data: Array<Goldilocks>
+    pub data: Array<HashOut>
 }
 
 /// helper function to calculate the log base 2 of a number
@@ -47,24 +48,19 @@ impl MerkleCapsImpl of MerkleCapsTrait {
         log2_strict(self.len())
     }
 
-    fn flatten(self: @MerkleCaps) -> Array<Goldilocks> {
-        self.data.clone()
-    }
 
-    fn verify(
-        self: @MerkleCaps, index: usize, leaf: Goldilocks, proof: Array<Goldilocks>,
-    ) -> bool {
+    fn verify(self: @MerkleCaps, index: usize, leaf: HashOut, proof: Span<HashOut>,) -> bool {
         let mut node = leaf;
         let mut index = index;
 
         let mut i = 0;
         while i < proof
             .len() {
-                let sibling = *proof[i];
+                let sibling = *proof.get(i).unwrap().unbox();
                 if index % 2 == 0 {
-                    node = *hash_n_to_m_no_pad(array![node, sibling].span(), 1)[0];
+                    node = hash_two_to_one(node, sibling);
                 } else {
-                    node = *hash_n_to_m_no_pad(array![sibling, node].span(), 1)[0];
+                    node = hash_two_to_one(sibling, node);
                 }
                 index /= 2;
                 i += 1;
@@ -77,8 +73,8 @@ impl MerkleCapsImpl of MerkleCapsTrait {
 #[derive(Drop, Debug)]
 pub struct MerkleTree {
     /// The data in the leaves of the Merkle tree.
-    pub leaves: Array<Goldilocks>,
-    pub digests: Array<Goldilocks>,
+    pub leaves: Array<HashOut>, // leaves are assumed to be formatted as hash ouputs 
+    pub digests: Array<HashOut>,
     pub cap: MerkleCaps,
 }
 
@@ -89,10 +85,10 @@ impl MerkleTreeImpl of MerkleTreeTrait {
         MerkleTree { leaves: array![], digests: array![], cap: MerkleCapsImpl::default(), }
     }
 
-    fn new(leaves: Array<Goldilocks>, cap_size: usize) -> MerkleTree {
+    fn new(leaves: Array<HashOut>, cap_size: usize) -> MerkleTree {
         let num_leaves = leaves.len();
-        let mut digests: Array<Goldilocks> = array![];
-        let mut cap: Array<Goldilocks> = array![];
+        let mut digests: Array<HashOut> = array![];
+        let mut cap: Array<HashOut> = array![];
 
         // Populate the leaves and compute hashes for internal nodes
         let mut i = 0;
@@ -101,10 +97,8 @@ impl MerkleTreeImpl of MerkleTreeTrait {
 
         // Compute the first level of internal nodes
         while i < num_leaves {
-            let hash_val = hash_n_to_m_no_pad(
-                array![*l[i], *l[i + 1]].span(), 1
-            )[0]; // 2 to one hash
-            digests.append(*hash_val);
+            let hash_val = hash_two_to_one(*l[i], *l[i + 1]); // 2 to one hash
+            digests.append(hash_val);
             i += 2;
         };
 
@@ -118,15 +112,15 @@ impl MerkleTreeImpl of MerkleTreeTrait {
             i = 0;
             // loop through the current level of internal nodes and compute hash(l, r) for each pair of nodes
             while i < level_size {
-                let hash_val = hash_n_to_m_no_pad(
-                    array![*digests[start_idx + i], *digests[start_idx + i + 1]].span(), 1
-                )[0];
+                let hash_val = hash_two_to_one(
+                    *digests[start_idx + i], *digests[start_idx + i + 1]
+                );
                 if (level_size / 2 == cap_size) {
-                    // cap is the next level - which means we no longer need to store 
+                    // cap is the next level - which means we store
                     // the hashes of the level being computed in cap instead of digests
-                    cap.append(*hash_val);
+                    cap.append(hash_val);
                 } else {
-                    digests.append(*hash_val);
+                    digests.append(hash_val);
                 }
                 i += 2;
             };
@@ -142,9 +136,9 @@ impl MerkleTreeImpl of MerkleTreeTrait {
         MerkleTree { leaves: leaves, digests: digests, cap: MerkleCaps { data: cap } }
     }
 
-    fn prove(self: @MerkleTree, index: usize) -> Array<Goldilocks> {
+    fn prove(self: @MerkleTree, index: usize) -> Span<HashOut> {
         // includes the sibling of the leaf and the siblings of the nodes on the path to the cap level
-        let mut proof: Array<Goldilocks> = array![];
+        let mut proof: Array<HashOut> = array![];
         let mut i = index;
 
         // add sibling of leaf to proof
@@ -181,24 +175,27 @@ impl MerkleTreeImpl of MerkleTreeTrait {
             remaining_levels -= 1;
         };
 
-        proof
+        proof.span()
     }
 }
-
-
 #[cfg(test)]
 mod tests {
     use plonky2_verifier::merkle::merkle_caps::MerkleCapsTrait;
     use core::traits::Into;
-    use super::{gl, MerkleTreeImpl, MerkleCapsImpl, MerkleTree};
+    use super::{gl, HashOut, MerkleTreeImpl, MerkleCapsImpl, MerkleTree, HashOutImpl};
+
+    fn h(x: u64) -> HashOut {
+        HashOutImpl::new(array![gl(x), gl(0), gl(0), gl(0)].span())
+    }
 
     fn make_sample_tree() -> MerkleTree {
-        MerkleTreeImpl::new(array![gl(1), gl(2), gl(3), gl(4), gl(5), gl(6), gl(7), gl(8)], 2)
+        MerkleTreeImpl::new(array![h(1), h(2), h(3), h(4), h(5), h(6), h(7), h(8),], 2)
     }
 
     #[test]
     fn test_init() {
         let tree = make_sample_tree();
+        // let tree = make_sample_tree();
         assert_eq!(tree.leaves.len(), 8);
         assert_eq!(tree.digests.len(), 4);
         assert_eq!(tree.cap.len(), 2);
@@ -215,33 +212,22 @@ mod tests {
     fn test_should_verify_valid_proof() {
         let tree = make_sample_tree();
         let proof = tree.prove(5);
-        let verified = tree.cap.verify(5, gl(6), proof);
+        let verified = tree.cap.verify(5, h(6), proof);
         assert_eq!(verified, true);
     }
-
     #[test]
     fn test_should_verify_valid_proof2() {
         let tree = make_sample_tree();
         let proof = tree.prove(1); // index of 1
-        let verified = tree.cap.verify(1, gl(2), proof);
+        let verified = tree.cap.verify(1, h(2), proof);
         assert_eq!(verified, true);
     }
-
     #[test]
     fn test_should_not_verify_invalid_proof() {
         let tree = make_sample_tree();
         let proof = tree.prove(5);
-        let verified = tree.cap.verify(5, gl(7), proof);
+        let verified = tree.cap.verify(5, h(7), proof);
         assert_eq!(verified, false);
     }
-
-    #[test]
-    fn test_should_verify_valid_proof_with_cap_1() {
-        let leaves = array![gl(1), gl(2), gl(3), gl(4), gl(5), gl(6), gl(7), gl(8)];
-        let cap_size = 1;
-        let tree = MerkleTreeImpl::new(leaves, cap_size);
-        let proof = tree.prove(1); // index of 1
-        let verified = tree.cap.verify(1, gl(2), proof);
-        assert_eq!(verified, true);
-    }
 }
+

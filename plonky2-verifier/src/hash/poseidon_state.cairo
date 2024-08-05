@@ -1,6 +1,6 @@
 use plonky2_verifier::fields::goldilocks::{Goldilocks, gl};
 
-#[derive(Clone, Drop, Debug, eq, partialEq)]
+#[derive(Drop, Debug, eq, partialEq, Copy)]
 pub struct HashOut {
     pub elemets: Span<Goldilocks>,
 }
