@@ -37,12 +37,12 @@ impl PoseidonPermuter of Permuter {
 
     fn set_from_slice(ref self: PoseidonPermutation, slice: Span<Goldilocks>, start_idx: usize) {
         let len = slice.len();
-        let mut idx = start_idx;
+        let mut idx = 0;
         loop {
             if idx >= len {
                 break;
             }
-            self.set_elt(*slice.at(idx), idx);
+            self.set_elt(*slice.at(idx), idx + start_idx);
             idx += 1;
         };
     }
@@ -336,6 +336,13 @@ pub fn hash_n_to_m_no_pad(inputs: Span<Goldilocks>, num_outputs: usize) -> Span<
     outputs.span()
 }
 
+// pub fn compress(x: Span<Goldilocks>, y: Span<Goldilocks>) -> Span<Goldilocks> {
+//     assert!(x.len() == y.len());
+
+//     let mut perm = Permuter::default();
+//     perm.set_from_slice(x, 0);
+//     perm.set_from_slice(y, SPONGE_WIDTH);
+// }
 
 #[cfg(test)]
 mod tests {
