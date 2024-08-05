@@ -336,20 +336,24 @@ pub fn hash_n_to_m_no_pad(inputs: Span<Goldilocks>, num_outputs: usize) -> Span<
     outputs.span()
 }
 
-// pub fn compress(x: Span<Goldilocks>, y: Span<Goldilocks>) -> Span<Goldilocks> {
-//     assert!(x.len() == y.len());
+pub fn compress(x: Span<Goldilocks>, y: Span<Goldilocks>) -> Span<Goldilocks> {
+    assert!(x.len() == y.len());
 
-//     let mut perm = Permuter::default();
-//     perm.set_from_slice(x, 0);
-//     perm.set_from_slice(y, SPONGE_WIDTH);
-// }
+    let mut perm = Permuter::default();
+    perm.set_from_slice(x, 0);
+    perm.set_from_slice(y, 4);
+
+    perm.permute();
+
+    perm.squeeze().slice(0, 4)
+}
 
 #[cfg(test)]
 mod tests {
     use core::to_byte_array::FormatAsByteArray;
     use core::traits::Into;
     use core::traits::RemEq;
-    use super::{hash_n_to_m_no_pad, gl, PoseidonStateArray, PoseidonTrait};
+    use super::{hash_n_to_m_no_pad, gl, PoseidonStateArray, PoseidonTrait, compress};
 
     #[test]
     fn test_constant_layer() {
@@ -757,6 +761,37 @@ mod tests {
             gl(18406498950571142509),
             gl(14139074714504212678),
             gl(361636287427537691)
+        ]
+            .span();
+
+        assert_eq!(res, expected_result);
+    }
+
+    #[test]
+    fn test_two_to_one() {
+        let left = array![
+            gl(0x123456789abcdef0),
+            gl(0x123456789abcdef0),
+            gl(0x123456789abcdef0),
+            gl(0x123456789abcdef0)
+        ]
+            .span();
+
+        let right = array![
+            gl(0x123456789abcdef0),
+            gl(0x123456789abcdef0),
+            gl(0x123456789abcdef0),
+            gl(0x123456789abcdef0)
+        ]
+            .span();
+
+        let res = compress(left, right);
+
+        let expected_result = array![
+            gl(9281303514704740231),
+            gl(8186319561797792009),
+            gl(7590563702884938881),
+            gl(10671169844377727805)
         ]
             .span();
 
