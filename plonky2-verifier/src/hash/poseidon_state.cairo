@@ -1,5 +1,32 @@
 use plonky2_verifier::fields::goldilocks::{Goldilocks, gl};
 
+#[derive(Clone, Drop, Debug, eq, partialEq)]
+pub struct HashOut {
+    pub elemets: Span<Goldilocks>,
+}
+
+#[generate_trait]
+pub impl HashOutImpl of HashOutTrait {
+    fn default() -> HashOut {
+        HashOut { elemets: array![].span() }
+    }
+
+    fn new(elements: Span<Goldilocks>) -> HashOut {
+        HashOut { elemets: elements }
+    }
+}
+
+pub impl GoldilocksAdd of core::traits::PartialEq<HashOut> {
+    fn eq(lhs: @HashOut, rhs: @HashOut) -> bool {
+        lhs.elemets == rhs.elemets
+    }
+
+    fn ne(lhs: @HashOut, rhs: @HashOut) -> bool {
+        lhs.elemets != rhs.elemets
+    }
+}
+
+
 #[derive(Clone, Drop, Debug)]
 pub struct PoseidonState {
     pub s0: Goldilocks,

@@ -1,14 +1,15 @@
 use core::array::ArrayTrait;
 use core::array::Span;
 use core::array::SpanTrait;
-use core::box::BoxTrait;
 use core::option::OptionTrait;
 use core::to_byte_array::FormatAsByteArray;
 use core::traits::Into;
 use plonky2_verifier::fields::goldilocks::GoldilocksTrait;
 use plonky2_verifier::fields::goldilocks::{Goldilocks, gl};
 use plonky2_verifier::hash::poseidon_state::PoseidonStateArrarTrait;
-use plonky2_verifier::hash::poseidon_state::{PoseidonState, PoseidonStateArray};
+use plonky2_verifier::hash::poseidon_state::{
+    PoseidonState, PoseidonStateArray, HashOut, HashOutImpl
+};
 use plonky2_verifier::hash::poseidon_constants::{
     ALL_ROUND_CONSTANTS, HALF_N_FULL_ROUNDS, MDS_MATRIX_CIRC, MDS_MATRIX_DIAG, SPONGE_WIDTH,
     SPONGE_RATE, FAST_PARTIAL_ROUND_VS, FAST_PARTIAL_ROUND_W_HATS,
@@ -336,24 +337,26 @@ pub fn hash_n_to_m_no_pad(inputs: Span<Goldilocks>, num_outputs: usize) -> Span<
     outputs.span()
 }
 
-pub fn compress(x: Span<Goldilocks>, y: Span<Goldilocks>) -> Span<Goldilocks> {
-    assert!(x.len() == y.len());
-
+pub fn hash_two_to_one(x: HashOut, y: HashOut) -> HashOut {
     let mut perm = Permuter::default();
-    perm.set_from_slice(x, 0);
-    perm.set_from_slice(y, 4);
+    perm.set_from_slice(x.elemets, 0);
+    perm.set_from_slice(y.elemets, 4);
 
     perm.permute();
 
-    perm.squeeze().slice(0, 4)
+    HashOutImpl::new(perm.squeeze().slice(0, 4))
 }
+
 
 #[cfg(test)]
 mod tests {
     use core::to_byte_array::FormatAsByteArray;
     use core::traits::Into;
     use core::traits::RemEq;
-    use super::{hash_n_to_m_no_pad, gl, PoseidonStateArray, PoseidonTrait, compress};
+    use super::{
+        hash_n_to_m_no_pad, gl, PoseidonStateArray, PoseidonTrait, hash_two_to_one, HashOut
+    };
+    use plonky2_verifier::hash::poseidon_state::{PoseidonState, HashOutImpl};
 
     #[test]
     fn test_constant_layer() {
@@ -769,31 +772,36 @@ mod tests {
 
     #[test]
     fn test_two_to_one() {
-        let left = array![
-            gl(0x123456789abcdef0),
-            gl(0x123456789abcdef0),
-            gl(0x123456789abcdef0),
-            gl(0x123456789abcdef0)
-        ]
-            .span();
+        let left = HashOutImpl::new(
+            array![
+                gl(0x123456789abcdef0),
+                gl(0x123456789abcdef0),
+                gl(0x123456789abcdef0),
+                gl(0x123456789abcdef0)
+            ]
+                .span()
+        );
 
-        let right = array![
-            gl(0x123456789abcdef0),
-            gl(0x123456789abcdef0),
-            gl(0x123456789abcdef0),
-            gl(0x123456789abcdef0)
-        ]
-            .span();
+        let right = HashOutImpl::new(
+            array![
+                gl(0x123456789abcdef0),
+                gl(0x123456789abcdef0),
+                gl(0x123456789abcdef0),
+                gl(0x123456789abcdef0)
+            ]
+                .span()
+        );
+        let res = hash_two_to_one(left, right);
 
-        let res = compress(left, right);
-
-        let expected_result = array![
-            gl(9281303514704740231),
-            gl(8186319561797792009),
-            gl(7590563702884938881),
-            gl(10671169844377727805)
-        ]
-            .span();
+        let expected_result = HashOutImpl::new(
+            array![
+                gl(9281303514704740231),
+                gl(8186319561797792009),
+                gl(7590563702884938881),
+                gl(10671169844377727805)
+            ]
+                .span()
+        );
 
         assert_eq!(res, expected_result);
     }
