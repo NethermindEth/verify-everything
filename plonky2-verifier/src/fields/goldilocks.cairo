@@ -58,7 +58,7 @@ pub impl GoldilocksMul of core::traits::Mul<Goldilocks> {
     }
 }
 
-pub impl M31Zero of core::num::traits::Zero<Goldilocks> {
+pub impl GoldilocksZero of core::num::traits::Zero<Goldilocks> {
     fn zero() -> Goldilocks {
         Goldilocks { inner: 0 }
     }
@@ -71,7 +71,7 @@ pub impl M31Zero of core::num::traits::Zero<Goldilocks> {
 }
 
 
-pub impl M31One of core::num::traits::One<Goldilocks> {
+pub impl GoldilocksOne of core::num::traits::One<Goldilocks> {
     fn one() -> Goldilocks {
         Goldilocks { inner: 1 }
     }
