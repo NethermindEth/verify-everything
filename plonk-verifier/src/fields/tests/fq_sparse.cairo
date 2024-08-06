@@ -86,9 +86,6 @@ fn fq6_mul_01() {
     let Fq12 { c0: b, c1: _ } = a_12();
     let c = a * b;
     let c_s: Fq6 = b.u_mul_01(a_s, field_nz).to_fq(field_nz);
-    // for c0 to c4
-    // println!("{}", c);
-    // println!("{}{}{}{}{}", c_s.c0, c_s.c1, c_s.c2, c_s.c3, c_s.c4);
     assert(c.c0 == c_s.c0, 'mul034034 c0 failed');
     assert(c.c1 == c_s.c1, 'mul034034 c1 failed');
     assert(c.c2 == c_s.c2, 'mul034034 c2 failed');
@@ -108,9 +105,7 @@ fn s034_mul_034() {
     let (b, b_s) = set_b();
     let c = a * b;
     let c_s = a_s.mul_034_by_034(b_s, field_nz);
-    // for c0 to c4
-    // println!("{}", c);
-    // println!("{}{}{}{}{}", c_s.c0, c_s.c1, c_s.c2, c_s.c3, c_s.c4);
+
     assert(c.c0.c0 == c_s.c0, 'mul034034 c0 failed');
     assert(c.c0.c1 == c_s.c1, 'mul034034 c1 failed');
     assert(c.c0.c2 == c_s.c2, 'mul034034 c2 failed');
@@ -125,8 +120,7 @@ fn fq12_mul_034() {
     let (b, b_s) = set_b();
     let c = a * b;
     let c_s = a.mul_034(b_s, field_nz);
-    // for c0 to c4
-    // println!("{}", c);
+
     assert(c == c_s, 'mul034034 c0.c0 failed');
 }
 
@@ -138,8 +132,6 @@ fn s01234_mul_034() {
 
     let c = a * b;
     let c_s = a_s.mul_01234_034(b_s, field_nz);
-    // println!("a * b: {}", c);
-    // println!("a * b_s: {}", c_s);
     assert(c == c_s, 'mul_01234_034 incorrect');
 }
 
@@ -150,8 +142,6 @@ fn fq12_mul_01234() {
     let (b, b_s) = set_01234();
     let c = a * b;
     let c_s = a.mul_01234(b_s, field_nz);
-    // println!("a * b: {}", c);
-    // println!("a * b_s: {}", c_s);
     assert(c == c_s, 'mul01234 incorrect');
 }
 

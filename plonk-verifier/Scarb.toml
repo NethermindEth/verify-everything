@@ -11,6 +11,7 @@ cairo_test = "2.7.0-rc.3"
 
 [dependencies] 
 starknet = ">=2.7.0-rc.3" 
+# cairo_pairing = { git = "https://github.com/shramee/cairo_pairing.git"}
 
 [[target.starknet-contract]]
 sierra = true
