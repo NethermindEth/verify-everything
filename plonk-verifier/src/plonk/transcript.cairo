@@ -14,6 +14,7 @@ use plonk_verifier::fields::{fq, Fq, FqIntoU256};
 use plonk_verifier::traits::FieldMulShortcuts;
 use plonk_verifier::plonk::utils::{convert_le_to_be, hex_to_decimal, decimal_to_byte_array};
 
+
 #[derive(Drop)]
 pub struct PlonkTranscript {
     data: Array<TranscriptElement<AffineG1, Fq>>
@@ -28,7 +29,7 @@ enum TranscriptElement<AffineG1, Fq> {
 #[derive(Drop)]
 trait Keccak256Transcript<T> {
     fn new() -> T;
-    fn add_pol_commitment(ref self: T, polynomial_commitment: AffineG1);
+    fn add_poly_commitment(ref self: T, polynomial_commitment: AffineG1);
     fn add_scalar(ref self: T, scalar: Fq);
     fn get_challenge(self: T) -> Fq;
 }
@@ -38,7 +39,7 @@ impl Transcript of Keccak256Transcript<PlonkTranscript> {
     fn new() -> PlonkTranscript {
         PlonkTranscript { data: ArrayTrait::new() }
     }
-    fn add_pol_commitment(ref self: PlonkTranscript, polynomial_commitment: AffineG1) {
+    fn add_poly_commitment(ref self: PlonkTranscript, polynomial_commitment: AffineG1) {
         self.data.append(TranscriptElement::Polynomial(polynomial_commitment));
     }
 
@@ -67,9 +68,7 @@ impl Transcript of Keccak256Transcript<PlonkTranscript> {
                 },
                 TranscriptElement::Scalar(scalar) => {
                     let s: u256 = scalar.c0.clone();
-                    println!("s: {}", s);
                     let mut s_bytes: ByteArray = decimal_to_byte_array(s);
-                    println!("s_bytes: {:?}", s_bytes);
                     buffer.append(@s_bytes);
                 },
             };
@@ -77,9 +76,7 @@ impl Transcript of Keccak256Transcript<PlonkTranscript> {
         };
 
         let le_value = keccak::compute_keccak_byte_array(@buffer);
-        println!("le_value: {}", le_value);
         let be_value = convert_le_to_be(le_value);
-        println!("be_value: {}", be_value);
         let be_u256: u256 = hex_to_decimal(be_value);
 
         fq(be_u256 % ORDER)

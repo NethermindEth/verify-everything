@@ -1,3 +1,5 @@
+use core::option::OptionTrait;
+use core::traits::TryInto;
 use core::fmt::Display;
 use core::traits::Destruct;
 use core::clone::Clone;
@@ -6,14 +8,17 @@ use core::debug::{PrintTrait, print_byte_array_as_string};
 use core::array::ArrayTrait;
 use core::cmp::max;
 
+use plonk_verifier::traits::FieldShortcuts;
+use plonk_verifier::traits::FieldOps;
 use plonk_verifier::traits::FieldMulShortcuts;
 use plonk_verifier::plonk::transcript::Keccak256Transcript;
 use plonk_verifier::curve::groups::{g1, g2, AffineG1, AffineG2};
 use plonk_verifier::curve::groups::ECOperations;
 use plonk_verifier::fields::{fq, Fq, fq2, Fq2, FqOps, FqUtils};
-use plonk_verifier::curve::constants::{ORDER};
+use plonk_verifier::curve::constants::{ORDER, ORDER_NZ};
 use plonk_verifier::plonk::types::{PlonkProof, PlonkVerificationKey, PlonkChallenge};
 use plonk_verifier::plonk::transcript::{Transcript, TranscriptElement};
+use plonk_verifier::curve::{u512, sqr_nz, mul, mul_u, mul_nz, div_nz, sub_u};
 
 #[generate_trait]
 impl PlonkVerifier of PVerifier {
@@ -44,9 +49,11 @@ impl PlonkVerifier of PVerifier {
             && Self::check_public_inputs_length(
                 verification_key.nPublic, publicSignals.len().into()
             );
-        let mut _challenges: PlonkChallenge = Self::compute_challenges(
+        let mut challenges: PlonkChallenge = Self::compute_challenges(
             verification_key, proof, publicSignals
         );
+
+        let mut _L = Self::calculate_lagrange_evaluations(verification_key, challenges);
 
         result
     }
@@ -93,23 +100,23 @@ impl PlonkVerifier of PVerifier {
 
         // Challenge round 2: beta and gamma
         let mut beta_transcript = Transcript::new();
-        beta_transcript.add_pol_commitment(verification_key.Qm);
-        beta_transcript.add_pol_commitment(verification_key.Ql);
-        beta_transcript.add_pol_commitment(verification_key.Qr);
-        beta_transcript.add_pol_commitment(verification_key.Qo);
-        beta_transcript.add_pol_commitment(verification_key.Qc);
-        beta_transcript.add_pol_commitment(verification_key.S1);
-        beta_transcript.add_pol_commitment(verification_key.S2);
-        beta_transcript.add_pol_commitment(verification_key.S3);
+        beta_transcript.add_poly_commitment(verification_key.Qm);
+        beta_transcript.add_poly_commitment(verification_key.Ql);
+        beta_transcript.add_poly_commitment(verification_key.Qr);
+        beta_transcript.add_poly_commitment(verification_key.Qo);
+        beta_transcript.add_poly_commitment(verification_key.Qc);
+        beta_transcript.add_poly_commitment(verification_key.S1);
+        beta_transcript.add_poly_commitment(verification_key.S2);
+        beta_transcript.add_poly_commitment(verification_key.S3);
 
         let mut i = 0;
         while i < publicSignals.len() {
             beta_transcript.add_scalar(fq(publicSignals.at(i).clone()));
             i += 1;
         };
-        beta_transcript.add_pol_commitment(proof.A);
-        beta_transcript.add_pol_commitment(proof.B);
-        beta_transcript.add_pol_commitment(proof.C);
+        beta_transcript.add_poly_commitment(proof.A);
+        beta_transcript.add_poly_commitment(proof.B);
+        beta_transcript.add_poly_commitment(proof.C);
 
         challenges.beta = beta_transcript.get_challenge();
 
@@ -121,15 +128,15 @@ impl PlonkVerifier of PVerifier {
         let mut alpha_transcript = Transcript::new();
         alpha_transcript.add_scalar(challenges.beta);
         alpha_transcript.add_scalar(challenges.gamma);
-        alpha_transcript.add_pol_commitment(proof.Z);
+        alpha_transcript.add_poly_commitment(proof.Z);
         challenges.alpha = alpha_transcript.get_challenge();
 
         // Challenge round 4: xi
         let mut xi_transcript = Transcript::new();
         xi_transcript.add_scalar(challenges.alpha);
-        xi_transcript.add_pol_commitment(proof.T1);
-        xi_transcript.add_pol_commitment(proof.T2);
-        xi_transcript.add_pol_commitment(proof.T3);
+        xi_transcript.add_poly_commitment(proof.T1);
+        xi_transcript.add_poly_commitment(proof.T2);
+        xi_transcript.add_poly_commitment(proof.T3);
         challenges.xi = xi_transcript.get_challenge();
 
         // // Challenge round 5: v
@@ -159,13 +166,14 @@ impl PlonkVerifier of PVerifier {
 
         // Challenge: u
         let mut u_transcript = Transcript::new();
-        u_transcript.add_pol_commitment(proof.Wxi);
-        u_transcript.add_pol_commitment(proof.Wxiw);
+        u_transcript.add_poly_commitment(proof.Wxi);
+        u_transcript.add_poly_commitment(proof.Wxiw);
         challenges.u = u_transcript.get_challenge();
 
         challenges
     }
-    // step 6: calculate the lagrange evaluations
+
+    // step 5,6: compute zero polynomocal and calculate the lagrange evaluations
     fn calculate_lagrange_evaluations(
         verification_key: PlonkVerificationKey, mut challenges: PlonkChallenge
     ) -> Array<Fq> {
@@ -174,28 +182,32 @@ impl PlonkVerifier of PVerifier {
 
         let mut i = 0;
         while i < verification_key.power {
-            xin = xin.sqr();
+            let sqr_mod: u256 = sqr_nz(xin.c0, ORDER_NZ);
+            xin = fq(sqr_mod);
             domain_size *= 2;
             i += 1;
         };
-        challenges.xin = xin;
+
+        challenges.xin = fq(xin.c0);
         challenges.zh = xin.sub(fq(1));
 
-        let mut lagrange_evaluations = array![];
+        let mut lagrange_evaluations: Array<Fq> = array![];
         lagrange_evaluations.append(fq(0));
+
         let n: Fq = fq(domain_size);
-        let mut w: Fq = FqUtils::one();
+        let mut w: Fq = fq(1);
+
+        let n_public: u32 = verification_key.nPublic.try_into().unwrap();
 
         let mut j = 1;
-        while j <= max(1, verification_key.nPublic) {
-            let mut xi_sub_w = challenges.xi.sub(w);
-            let mut xi_mul_n = xi_sub_w.mul(n);
-            let mut w_mul_zh = w.mul(challenges.zh);
-            let mut div = w_mul_zh.div(xi_mul_n);
-            lagrange_evaluations.append(div);
+        while j <= max(1, n_public) {
+            let xi_sub_w: u256 = sub_u(challenges.xi.c0, w.c0);
+            let xi_mul_n: u256 = mul_nz(n.c0, xi_sub_w, ORDER_NZ);
+            let w_mul_zh: u256 = mul_nz(w.c0, challenges.zh.c0, ORDER_NZ);
+            let l_i = div_nz(w_mul_zh, xi_mul_n, ORDER_NZ);
+            lagrange_evaluations.append(fq(l_i));
 
-            // roots of unity check, need to fix
-            w = w.mul(fq(verification_key.power));
+            w = fq(mul_nz(w.c0, verification_key.w, ORDER_NZ));
 
             j += 1;
         };
