@@ -1,5 +1,5 @@
 use core::traits::TryInto;
-use plonk_verifier::curve::{FIELD, get_field_nz, add, sub, mul, scl, sqr, div, neg, inv};
+use plonk_verifier::curve::{FIELD, get_field_nz, add, sub_field, mul, scl, sqr, div, neg, inv};
 use plonk_verifier::curve::{
     add_u, sub_u, mul_u, sqr_u, scl_u, u512_reduce, u512_add_u256, u512_sub_u256
 };
@@ -117,7 +117,7 @@ impl FqOps of FieldOps<Fq> {
 
     #[inline(always)]
     fn sub(self: Fq, rhs: Fq) -> Fq {
-        fq(sub(self.c0, rhs.c0))
+        fq(sub_field(self.c0, rhs.c0))
     }
 
     #[inline(always)]

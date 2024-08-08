@@ -18,7 +18,7 @@ use plonk_verifier::fields::{fq, Fq, fq2, Fq2, FqOps, FqUtils};
 use plonk_verifier::curve::constants::{ORDER, ORDER_NZ};
 use plonk_verifier::plonk::types::{PlonkProof, PlonkVerificationKey, PlonkChallenge};
 use plonk_verifier::plonk::transcript::{Transcript, TranscriptElement};
-use plonk_verifier::curve::{u512, sqr_nz, mul, mul_u, mul_nz, div_nz, sub_u};
+use plonk_verifier::curve::{u512, sqr_nz, mul, mul_u, mul_nz, div_nz, sub_u, sub};
 
 #[generate_trait]
 impl PlonkVerifier of PVerifier {
@@ -49,11 +49,13 @@ impl PlonkVerifier of PVerifier {
             && Self::check_public_inputs_length(
                 verification_key.nPublic, publicSignals.len().into()
             );
-        let mut challenges: PlonkChallenge = Self::compute_challenges(
-            verification_key, proof, publicSignals
+        let challenges: PlonkChallenge = Self::compute_challenges(
+            verification_key, proof, publicSignals.clone()
         );
 
-        let mut _L = Self::calculate_lagrange_evaluations(verification_key, challenges);
+        let mut L = Self::calculate_lagrange_evaluations(verification_key, challenges);
+
+        let mut _PI = Self::calculate_PI(publicSignals.clone(), L);
 
         result
     }
@@ -173,7 +175,7 @@ impl PlonkVerifier of PVerifier {
         challenges
     }
 
-    // step 5,6: compute zero polynomocal and calculate the lagrange evaluations
+    // step 5,6: compute zero polynomial and calculate the lagrange evaluations
     fn calculate_lagrange_evaluations(
         verification_key: PlonkVerificationKey, mut challenges: PlonkChallenge
     ) -> Array<Fq> {
@@ -213,5 +215,27 @@ impl PlonkVerifier of PVerifier {
         };
 
         lagrange_evaluations
+    }
+
+    // step 7: compute public input polynomial evaluation
+    fn calculate_PI(publicSignals: Array<u256>, L: Array<Fq>) -> Fq {
+        let mut PI: Fq = fq(0);
+        let mut i = 0;
+
+        while i < publicSignals.len() {
+            println!("i: {}", i);
+            let w: u256 = publicSignals[i].clone();
+            println!("publicSignals: {}", publicSignals[i]);
+            println!("L: {}", L[i + 1].c0);
+            let w_mul_L: u256 = mul_nz(w, L[i + 1].c0.clone(), ORDER_NZ);
+
+            let pi = sub(PI.c0, w_mul_L, ORDER);
+            PI = fq(pi);
+
+            i += 1;
+        };
+        println!("PI: {}", PI.c0);
+
+        PI
     }
 }

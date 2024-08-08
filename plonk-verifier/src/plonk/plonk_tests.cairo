@@ -69,6 +69,25 @@ mod plonk_tests {
     }
 
     #[test]
+    fn test_calculate_PI() {
+        let public_signals = constants::public_inputs();
+        let L = array![
+            fq(0),
+            fq(2620616904154172175670395853552055689556084771717235903725482226645091308782),
+            fq(9735872642513449311527546906861943889880061684478058520701947259343550999827),
+            fq(8327986554861251626971745666386010873552460747759282479133954378286727378410),
+            fq(4022337429609156333024873048706819958201086574374594171651602119736297244553),
+            fq(6617265984905210439143759470664564048122583210514619596354035502195742709385),
+        ];
+        let PI = PlonkVerifier::calculate_PI(public_signals, L);
+        let correct_PI: u256 =
+            18271457399299900228442257502287788641966159684441642978038700334889779304449;
+        assert_eq!(fq(correct_PI), PI);
+    }
+
+    // corelib keccak hash test
+
+    #[test]
     fn test_byte_array() {
         let mut ba = @"hello-world";
         let byte_array_hash_decimal = keccak::compute_keccak_byte_array(ba);

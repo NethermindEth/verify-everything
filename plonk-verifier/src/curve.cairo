@@ -30,7 +30,7 @@ use plonk_verifier::fields as f;
 use plonk_verifier::math::fast_mod as m;
 use m::{u512};
 use m::utils::u128_overflowing_sub;
-use m::{add_u, sub_u, mul_u, mul_nz, div_nz, sqr_u, sqr_nz, scl_u, reduce, u512_add, u512_sub};
+use m::{add_u, sub, sub_u, mul_u, mul_nz, div_nz, sqr_u, sqr_nz, scl_u, reduce, u512_add, u512_sub};
 use m::{u512_add_u256, u512_sub_u256, u512_add_overflow, u512_sub_overflow, u512_scl, u512_reduce};
 use m::{Tuple2Add, Tuple2Sub, Tuple3Add, Tuple3Sub};
 use f::{SixU512};
@@ -252,7 +252,7 @@ fn sqr(mut a: u256) -> u256 {
 }
 
 #[inline(always)]
-fn sub(mut a: u256, mut b: u256) -> u256 {
+fn sub_field(mut a: u256, mut b: u256) -> u256 {
     m::sub(a, b, FIELD)
 }
 
