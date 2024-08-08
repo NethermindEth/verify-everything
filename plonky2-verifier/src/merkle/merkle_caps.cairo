@@ -19,6 +19,11 @@ pub struct MerkleCaps {
     pub data: Array<HashOut>
 }
 
+#[derive(Drop, Debug)]
+pub struct MerkleProof {
+    pub siblings: Array<HashOut>,
+}
+
 /// helper function to calculate the log base 2 of a number
 fn log2_strict(x: usize) -> usize {
     let mut y = 0;
@@ -49,14 +54,15 @@ impl MerkleCapsImpl of MerkleCapsTrait {
     }
 
 
-    fn verify(self: @MerkleCaps, index: usize, leaf: HashOut, proof: Span<HashOut>,) -> bool {
+    fn verify(self: @MerkleCaps, index: usize, leaf: HashOut, proof: @MerkleProof,) -> bool {
         let mut node = leaf;
         let mut index = index;
 
         let mut i = 0;
         while i < proof
+            .siblings
             .len() {
-                let sibling = *proof.get(i).unwrap().unbox();
+                let sibling = *proof.siblings.get(i).unwrap().unbox();
                 if index % 2 == 0 {
                     node = hash_two_to_one(node, sibling);
                 } else {
@@ -136,7 +142,7 @@ impl MerkleTreeImpl of MerkleTreeTrait {
         MerkleTree { leaves: leaves, digests: digests, cap: MerkleCaps { data: cap } }
     }
 
-    fn prove(self: @MerkleTree, index: usize) -> Span<HashOut> {
+    fn prove(self: @MerkleTree, index: usize) -> MerkleProof {
         // includes the sibling of the leaf and the siblings of the nodes on the path to the cap level
         let mut proof: Array<HashOut> = array![];
         let mut i = index;
@@ -175,7 +181,7 @@ impl MerkleTreeImpl of MerkleTreeTrait {
             remaining_levels -= 1;
         };
 
-        proof.span()
+        MerkleProof { siblings: proof }
     }
 }
 #[cfg(test)]
@@ -205,28 +211,28 @@ mod tests {
     fn test_prove() {
         let tree = make_sample_tree();
         let proof = tree.prove(0);
-        assert_eq!(proof.len(), 2);
+        assert_eq!(proof.siblings.len(), 2);
     }
 
     #[test]
     fn test_should_verify_valid_proof() {
         let tree = make_sample_tree();
         let proof = tree.prove(5);
-        let verified = tree.cap.verify(5, h(6), proof);
+        let verified = tree.cap.verify(5, h(6), @proof);
         assert_eq!(verified, true);
     }
     #[test]
     fn test_should_verify_valid_proof2() {
         let tree = make_sample_tree();
         let proof = tree.prove(1); // index of 1
-        let verified = tree.cap.verify(1, h(2), proof);
+        let verified = tree.cap.verify(1, h(2), @proof);
         assert_eq!(verified, true);
     }
     #[test]
     fn test_should_not_verify_invalid_proof() {
         let tree = make_sample_tree();
         let proof = tree.prove(5);
-        let verified = tree.cap.verify(5, h(7), proof);
+        let verified = tree.cap.verify(5, h(7), @proof);
         assert_eq!(verified, false);
     }
 }
