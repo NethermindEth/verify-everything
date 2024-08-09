@@ -27,6 +27,8 @@ struct PlonkProof {
 struct PlonkVerificationKey {
     n: u256,
     power: u256,
+    k1: u256,
+    k2: u256,
     nPublic: u256,
     nLagrange: u256,
     Qm: AffineG1,

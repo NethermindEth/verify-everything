@@ -83,6 +83,8 @@ pub fn verification_key() -> (
     u256,
     u256,
     u256,
+    u256,
+    u256,
     AffineG1,
     AffineG1,
     AffineG1,
@@ -96,8 +98,8 @@ pub fn verification_key() -> (
 ) {
     let n = 4096;
     let power = 12;
-    let _k1 = 2;
-    let _k2 = 3;
+    let k1 = 2;
+    let k2 = 3;
 
     let nPublic: u256 = 5;
     let nLagrange: u256 = 5;
@@ -145,5 +147,5 @@ pub fn verification_key() -> (
         4191056764018303486822079644163839762717699764181526746691927713416713155706
     );
     let w = 4158865282786404163413953114870269622875596290766033564087307867933865333818;
-    (n, power, nPublic, nLagrange, Qm, Ql, Qr, Qo, Qc, S1, S2, S3, X_2, w)
+    (n, power, k1, k2, nPublic, nLagrange, Qm, Ql, Qr, Qo, Qc, S1, S2, S3, X_2, w)
 }

@@ -49,18 +49,20 @@ impl PlonkVerifier of PVerifier {
             && Self::check_public_inputs_length(
                 verification_key.nPublic.clone(), publicSignals.len().into()
             );
-        let challenges: PlonkChallenge = Self::compute_challenges(
+        let mut challenges: PlonkChallenge = Self::compute_challenges(
             verification_key.clone(), proof.clone(), publicSignals.clone()
         );
 
-        let mut L = Self::calculate_lagrange_evaluations(
-            verification_key.clone(), challenges.clone()
+        let (L, challenges) = Self::compute_lagrange_evaluations(
+            verification_key.clone(), challenges
         );
 
-        let mut PI = Self::calculate_PI(publicSignals.clone(), L.clone());
+        let mut PI = Self::compute_PI(publicSignals.clone(), L.clone());
 
-        let mut _R0 = Self::calculate_R(proof.clone(), challenges.clone(), PI, L[1].clone());
-
+        let mut R0 = Self::compute_R0(proof.clone(), challenges, PI, L[1].clone());
+        let mut D = Self::compute_D(
+            proof.clone(), challenges, verification_key.clone(), L[1].clone()
+        );
         result
     }
 
@@ -175,9 +177,9 @@ impl PlonkVerifier of PVerifier {
     }
 
     // step 5,6: compute zero polynomial and calculate the lagrange evaluations
-    fn calculate_lagrange_evaluations(
+    fn compute_lagrange_evaluations(
         verification_key: PlonkVerificationKey, mut challenges: PlonkChallenge
-    ) -> Array<Fq> {
+    ) -> (Array<Fq>, PlonkChallenge) {
         let mut xin = challenges.xi;
         let mut domain_size = 1;
 
@@ -213,11 +215,11 @@ impl PlonkVerifier of PVerifier {
             j += 1;
         };
 
-        lagrange_evaluations
+        (lagrange_evaluations, challenges)
     }
 
     // step 7: compute public input polynomial evaluation
-    fn calculate_PI(publicSignals: Array<u256>, L: Array<Fq>) -> Fq {
+    fn compute_PI(publicSignals: Array<u256>, L: Array<Fq>) -> Fq {
         let mut PI: Fq = fq(0);
         let mut i = 0;
 
@@ -234,7 +236,7 @@ impl PlonkVerifier of PVerifier {
     }
 
     // step 8: compute r constant
-    fn calculate_R(proof: PlonkProof, challenges: PlonkChallenge, PI: Fq, L1: Fq) -> Fq {
+    fn compute_R0(proof: PlonkProof, challenges: PlonkChallenge, PI: Fq, L1: Fq) -> Fq {
         let e1: u256 = PI.c0;
         let e2: u256 = mul_nz(L1.c0, sqr_nz(challenges.alpha.c0, ORDER_NZ), ORDER_NZ);
 
@@ -257,5 +259,71 @@ impl PlonkVerifier of PVerifier {
         let r0 = sub(sub(e1, e2, ORDER), e3, ORDER);
 
         fq(r0)
+    }
+
+    // step 9: Compute first part of batched polynomial commitment D
+    fn compute_D(
+        proof: PlonkProof, challenges: PlonkChallenge, vk: PlonkVerificationKey, l1: Fq
+    ) -> AffineG1 {
+        let mut d1 = vk.Qm.multiply((mul_nz(proof.eval_a.c0, proof.eval_b.c0, ORDER_NZ)));
+        d1 = d1.add(vk.Ql.multiply(proof.eval_a.c0));
+        d1 = d1.add(vk.Qr.multiply(proof.eval_b.c0));
+        d1 = d1.add(vk.Qo.multiply(proof.eval_c.c0));
+        d1 = d1.add(vk.Qc);
+
+        let betaxi = mul_nz(challenges.beta.c0, challenges.xi.c0, ORDER_NZ);
+        let mut d2a1 = add_nz(proof.eval_a.c0, betaxi, ORDER_NZ);
+        d2a1 = add_nz(d2a1, challenges.gamma.c0, ORDER_NZ);
+
+        let mut d2a2 = mul_nz(betaxi, vk.k1, ORDER_NZ);
+        d2a2 = add_nz(proof.eval_b.c0, d2a2, ORDER_NZ);
+        d2a2 = add_nz(d2a2, challenges.gamma.c0, ORDER_NZ);
+
+        let mut d2a3 = mul_nz(betaxi, vk.k2, ORDER_NZ);
+        d2a3 = add_nz(proof.eval_c.c0, d2a3, ORDER_NZ);
+        d2a3 = add_nz(d2a3, challenges.gamma.c0, ORDER_NZ);
+
+        let d2a = mul_nz(
+            mul_nz(mul_nz(d2a1, d2a2, ORDER_NZ), d2a3, ORDER_NZ), challenges.alpha.c0, ORDER_NZ
+        );
+
+        let d2b = mul_nz(l1.c0, sqr_nz(challenges.alpha.c0, ORDER_NZ), ORDER_NZ);
+
+        let d2 = proof.Z.multiply(add_nz(add_nz(d2a, d2b, ORDER_NZ), challenges.u.c0, ORDER_NZ));
+
+        let d3a = add_nz(
+            add_nz(
+                proof.eval_a.c0, mul_nz(challenges.beta.c0, proof.eval_s1.c0, ORDER_NZ), ORDER_NZ
+            ),
+            challenges.gamma.c0,
+            ORDER_NZ
+        );
+
+        let d3b = add_nz(
+            add_nz(
+                proof.eval_b.c0, mul_nz(challenges.beta.c0, proof.eval_s2.c0, ORDER_NZ), ORDER_NZ
+            ),
+            challenges.gamma.c0,
+            ORDER_NZ
+        );
+
+        let d3c = mul_nz(
+            mul_nz(challenges.alpha.c0, challenges.beta.c0, ORDER_NZ), proof.eval_zw.c0, ORDER_NZ
+        );
+
+        let d3 = vk.S3.multiply(mul_nz(mul_nz(d3a, d3b, ORDER_NZ), d3c, ORDER_NZ));
+
+        let d4low = proof.T1;
+        let d4mid = proof.T2.multiply(challenges.xin.c0);
+        let d4high = proof.T3.multiply(sqr_nz(challenges.xin.c0, ORDER_NZ));
+        let mut d4 = d4mid.add(d4high);
+        d4 = d4.add(d4low);
+        d4 = d4.multiply(challenges.zh.c0);
+
+        let mut d = d1.add(d2);
+        d = d.add(d3.neg());
+        d = d.add(d4.neg());
+
+        d
     }
 }
