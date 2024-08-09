@@ -48,41 +48,6 @@ fn sqr() -> Fq12 {
         0xf8e3c319575383456ae4417d6299dc156e9d71c91dc296d5cd724ded415d29c,
     )
 }
-// #[test]
-// #[available_gas(20000000)]
-// fn krbn_experiments() {
-//     let Fq12 { c0: Fq6 { c0: _, c1: _, c2: g2 }, c1: Fq6 { c0: g3, c1: g4, c2: g5 } } =
-//         a_cyc();
-//     let field_nz: NonZero<u256> = get_field_nz();
-//     let asq = sqr();
-//     // Si,j = (gi + gj )^2 and Si = gi^2
-//     // let S2: (u512, u512) = g2.u_sqr();
-//     let S3: (u512, u512) = g3.u_sqr();
-//     let S4: (u512, u512) = g4.u_sqr();
-//     let S5: (u512, u512) = g5.u_sqr();
-//     let S4_5: (u512, u512) = (g4 + g5).u_sqr();
-//     // let S2_3: (u512, u512) = g2.u_add(g3).u_sqr();
-
-//     let s4 = g4.sqr();
-//     let s5 = g5.sqr();
-//     let s4_5 = (g4 + g5).sqr();
-
-//     // h₂ = 2g₂ + 3ξ((g₄+g₅)²-g₄²-g₅²)
-//     // h₃ = 3(g₄² + g₅²ξ) - 2g₃
-//     // h₄ = 3(g₂² + g₃²ξ) - 2g₄
-//     // h₅ = 2g₅ + 3 ((g₂+g₃)²-g₂²-g₃²)
-
-//     // h2 = 3(S4_5 − S4 − S5)ξ + 2g2;
-//     // let _h2: (u512, u512) = X3(mul_by_xi_nz(S4_5 - S4 - S5, field_nz)).u512_add_fq(g2.u_add(g2));
-//     // let h2: Fq2 = _h2.to_fq(field_nz);
-
-//     // h₂ = 2g₂ + 3ξ((g₄+g₅)²-g₄²-g₅²)
-//     let h2 = (s4_5 - s4 - s5).mul_by_nonresidue().scale(fq(3)) + g2.u_add(g2);
-//     // let h2 = g2.u_add(g2) + x3((s4_5 - s4 - s5).mul_by_nonresidue());
-
-//     println!("{}{}", asq.c0.c2, h2);
-//     assert(asq.c0.c2 == h2.fix_mod(), 'mismatch');
-// }
 
 fn compare_fq2(a: Fq2, b: Fq2, help: ByteArray) {
     println!("\n\n{} match: {}{}{}", help, a == b, a, b);
@@ -93,7 +58,6 @@ fn print_fq2(a: (u512, u512), help: ByteArray) {
 }
 
 #[test]
-#[available_gas(200000000)]
 fn krbn1235() {
     let field_nz: NonZero<u256> = get_field_nz();
     let a = a_cyc().sqr_krbn_1235(field_nz);
@@ -106,7 +70,6 @@ fn krbn1235() {
 }
 
 #[test]
-#[available_gas(200000000)]
 fn krbn2345() {
     let field_nz: NonZero<u256> = get_field_nz();
     let a = a_cyc().krbn_compress_2345().sqr_krbn(field_nz);
@@ -119,7 +82,6 @@ fn krbn2345() {
 }
 
 #[test]
-#[available_gas(50000000)]
 fn expand_2345() {
     let a = a_cyc();
     let field_nz = get_field_nz();
@@ -128,7 +90,6 @@ fn expand_2345() {
 }
 
 #[test]
-#[available_gas(50000000)]
 fn sqr_cyc() {
     let a = a_cyc();
     let field_nz = get_field_nz();
@@ -204,7 +165,6 @@ fn final_result() -> Fq12 {
 }
 
 #[test]
-#[available_gas(99999999999999)]
 fn exponentiation_compare() {
     let f12 = pair_result_12().final_exponentiation();
     let f21 = pair_result_21().final_exponentiation();
@@ -214,7 +174,6 @@ fn exponentiation_compare() {
 }
 
 #[test]
-#[available_gas(100000000)]
 fn pow_test() {
     let field_nz: NonZero<u256> = get_field_nz();
     let x = easy_result();

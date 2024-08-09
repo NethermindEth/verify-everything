@@ -113,7 +113,7 @@ impl Fq12Utils of FieldUtils<Fq12, Fq6> {
     #[inline(always)]
     fn scale(self: Fq12, by: Fq6) -> Fq12 {
         assert(false, 'no_impl: fq12 scale');
-        Fq12Utils::one()
+        Self::one()
     }
 
     fn conjugate(self: Fq12) -> Fq12 {
@@ -122,7 +122,7 @@ impl Fq12Utils of FieldUtils<Fq12, Fq6> {
 
     fn mul_by_nonresidue(self: Fq12,) -> Fq12 {
         assert(false, 'no_impl: fq12 non residue');
-        Fq12Utils::one()
+        Self::one()
     }
 
     fn frobenius_map(self: Fq12, power: usize) -> Fq12 {
