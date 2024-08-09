@@ -1,5 +1,6 @@
 #[cfg(test)]
 mod plonk_tests {
+    use core::clone::Clone;
     use plonk_verifier::plonk::constants;
     use plonk_verifier::plonk::types::{PlonkProof, PlonkVerificationKey};
     use plonk_verifier::plonk::verify::{PlonkVerifier};
@@ -85,8 +86,41 @@ mod plonk_tests {
         assert_eq!(fq(correct_PI), PI);
     }
 
-    // corelib keccak hash test
+    #[test]
+    fn test_calculate_R() {
+        let (A, B, C, Z, T1, T2, T3, Wxi, Wxiw, eval_a, eval_b, eval_c, eval_s1, eval_s2, eval_zw) =
+            constants::proof();
+        let proof = PlonkProof {
+            A, B, C, Z, T1, T2, T3, Wxi, Wxiw, eval_a, eval_b, eval_c, eval_s1, eval_s2, eval_zw
+        };
 
+        let (n, power, nPublic, nLagrange, Qm, Ql, Qr, Qo, Qc, S1, S2, S3, X_2, w) =
+            constants::verification_key();
+        let verification_key = PlonkVerificationKey {
+            n, power, nPublic, nLagrange, Qm, Ql, Qr, Qo, Qc, S1, S2, S3, X_2, w
+        };
+
+        let public_signals = constants::public_inputs();
+        let challenges = PlonkVerifier::compute_challenges(
+            verification_key.clone(), proof.clone(), public_signals.clone()
+        );
+        let L = array![
+            fq(0),
+            fq(2620616904154172175670395853552055689556084771717235903725482226645091308782),
+            fq(9735872642513449311527546906861943889880061684478058520701947259343550999827),
+            fq(8327986554861251626971745666386010873552460747759282479133954378286727378410),
+            fq(4022337429609156333024873048706819958201086574374594171651602119736297244553),
+            fq(6617265984905210439143759470664564048122583210514619596354035502195742709385),
+        ];
+        let PI = PlonkVerifier::calculate_PI(public_signals.clone(), L.clone());
+        let R0 = PlonkVerifier::calculate_R(proof, challenges, PI, L[1].clone());
+
+        let correct_R0: u256 =
+            8252012205077960742641393316361079931166529015625841574934366119104137152715;
+        assert_eq!(fq(correct_R0), R0);
+    }
+
+    // corelib keccak hash test
     #[test]
     fn test_byte_array() {
         let mut ba = @"hello-world";

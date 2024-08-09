@@ -158,24 +158,12 @@ impl PlonkVerifier of PVerifier {
         v_transcript.add_scalar(proof.eval_s1);
         v_transcript.add_scalar(proof.eval_s2);
         v_transcript.add_scalar(proof.eval_zw);
-        // challenges.v.append(fq(0));
+
         challenges.v1 = v_transcript.get_challenge();
         challenges.v2 = challenges.v1.mul(challenges.v1.clone());
         challenges.v3 = challenges.v2.mul(challenges.v1.clone());
         challenges.v4 = challenges.v3.mul(challenges.v1.clone());
         challenges.v5 = challenges.v4.mul(challenges.v1.clone());
-        // let mut i = 2;
-        // loop {
-        //     if i < 6 {
-        //         let mut to_mul = challenges.v.at(1).clone();
-        //         to_mul = to_mul.mul(challenges.v.at(i - 1).clone());
-        //         challenges.v.append(to_mul);
-        //     } else {
-        //         break;
-        //     }
-
-        //     i += 1;
-        // };
 
         // Challenge: u
         let mut u_transcript = Transcript::new();
@@ -247,18 +235,18 @@ impl PlonkVerifier of PVerifier {
 
     // step 8: compute r constant
     fn calculate_R(proof: PlonkProof, challenges: PlonkChallenge, PI: Fq, L1: Fq) -> Fq {
-        // let mut r0: Fq = fq(0);
         let e1: u256 = PI.c0;
         let e2: u256 = mul_nz(L1.c0, sqr_nz(challenges.alpha.c0, ORDER_NZ), ORDER_NZ);
+
         let mut e3a = add_nz(
             proof.eval_a.c0, mul_nz(challenges.beta.c0, proof.eval_s1.c0, ORDER_NZ), ORDER_NZ
         );
-        e3a = add_nz(proof.eval_a.c0, challenges.gamma.c0, ORDER_NZ);
+        e3a = add_nz(e3a, challenges.gamma.c0, ORDER_NZ);
 
         let mut e3b = add_nz(
             proof.eval_b.c0, mul_nz(challenges.beta.c0, proof.eval_s2.c0, ORDER_NZ), ORDER_NZ
         );
-        e3b = add_nz(proof.eval_b.c0, challenges.gamma.c0, ORDER_NZ);
+        e3b = add_nz(e3b, challenges.gamma.c0, ORDER_NZ);
 
         let mut e3c = add_nz(proof.eval_c.c0, challenges.gamma.c0, ORDER_NZ);
 
@@ -267,7 +255,6 @@ impl PlonkVerifier of PVerifier {
         e3 = mul_nz(e3, challenges.alpha.c0, ORDER_NZ);
 
         let r0 = sub(sub(e1, e2, ORDER), e3, ORDER);
-        println!("r0:{:?} ", r0);
 
         fq(r0)
     }
