@@ -14,11 +14,11 @@ use plonk_verifier::traits::FieldMulShortcuts;
 use plonk_verifier::plonk::transcript::Keccak256Transcript;
 use plonk_verifier::curve::groups::{g1, g2, AffineG1, AffineG2};
 use plonk_verifier::curve::groups::ECOperations;
-use plonk_verifier::fields::{fq, Fq, fq2, Fq2, FqOps, FqUtils};
+use plonk_verifier::fields::{fq, Fq};
 use plonk_verifier::curve::constants::{ORDER, ORDER_NZ};
 use plonk_verifier::plonk::types::{PlonkProof, PlonkVerificationKey, PlonkChallenge};
 use plonk_verifier::plonk::transcript::{Transcript, TranscriptElement};
-use plonk_verifier::curve::{u512, sqr_nz, mul, mul_u, mul_nz, div_nz, sub_u, sub};
+use plonk_verifier::curve::{u512, sqr_nz, mul, mul_u, mul_nz, div_nz, add_nz, sub_u, sub};
 
 #[generate_trait]
 impl PlonkVerifier of PVerifier {
@@ -47,15 +47,19 @@ impl PlonkVerifier of PVerifier {
 
         result = result
             && Self::check_public_inputs_length(
-                verification_key.nPublic, publicSignals.len().into()
+                verification_key.nPublic.clone(), publicSignals.len().into()
             );
         let challenges: PlonkChallenge = Self::compute_challenges(
-            verification_key, proof, publicSignals.clone()
+            verification_key.clone(), proof.clone(), publicSignals.clone()
         );
 
-        let mut L = Self::calculate_lagrange_evaluations(verification_key, challenges);
+        let mut L = Self::calculate_lagrange_evaluations(
+            verification_key.clone(), challenges.clone()
+        );
 
-        let mut _PI = Self::calculate_PI(publicSignals.clone(), L);
+        let mut PI = Self::calculate_PI(publicSignals.clone(), L.clone());
+
+        let mut _R0 = Self::calculate_R(proof.clone(), challenges.clone(), PI, L[1].clone());
 
         result
     }
@@ -96,7 +100,11 @@ impl PlonkVerifier of PVerifier {
             xi: fq(0),
             xin: fq(0),
             zh: fq(0),
-            v: array![],
+            v1: fq(0),
+            v2: fq(0),
+            v3: fq(0),
+            v4: fq(0),
+            v5: fq(0),
             u: fq(0)
         };
 
@@ -150,21 +158,24 @@ impl PlonkVerifier of PVerifier {
         v_transcript.add_scalar(proof.eval_s1);
         v_transcript.add_scalar(proof.eval_s2);
         v_transcript.add_scalar(proof.eval_zw);
-        challenges.v.append(fq(0));
-        challenges.v.append(v_transcript.get_challenge());
+        // challenges.v.append(fq(0));
+        challenges.v1 = v_transcript.get_challenge();
+        challenges.v2 = challenges.v1.mul(challenges.v1.clone());
+        challenges.v3 = challenges.v2.mul(challenges.v1.clone());
+        challenges.v4 = challenges.v3.mul(challenges.v1.clone());
+        challenges.v5 = challenges.v4.mul(challenges.v1.clone());
+        // let mut i = 2;
+        // loop {
+        //     if i < 6 {
+        //         let mut to_mul = challenges.v.at(1).clone();
+        //         to_mul = to_mul.mul(challenges.v.at(i - 1).clone());
+        //         challenges.v.append(to_mul);
+        //     } else {
+        //         break;
+        //     }
 
-        let mut i = 2;
-        loop {
-            if i < 6 {
-                let mut to_mul = challenges.v.at(1).clone();
-                to_mul = to_mul.mul(challenges.v.at(i - 1).clone());
-                challenges.v.append(to_mul);
-            } else {
-                break;
-            }
-
-            i += 1;
-        };
+        //     i += 1;
+        // };
 
         // Challenge: u
         let mut u_transcript = Transcript::new();
@@ -223,19 +234,41 @@ impl PlonkVerifier of PVerifier {
         let mut i = 0;
 
         while i < publicSignals.len() {
-            println!("i: {}", i);
             let w: u256 = publicSignals[i].clone();
-            println!("publicSignals: {}", publicSignals[i]);
-            println!("L: {}", L[i + 1].c0);
             let w_mul_L: u256 = mul_nz(w, L[i + 1].c0.clone(), ORDER_NZ);
-
             let pi = sub(PI.c0, w_mul_L, ORDER);
-            PI = fq(pi);
 
+            PI = fq(pi);
             i += 1;
         };
-        println!("PI: {}", PI.c0);
 
         PI
+    }
+
+    // step 8: compute r constant
+    fn calculate_R(proof: PlonkProof, challenges: PlonkChallenge, PI: Fq, L1: Fq) -> Fq {
+        // let mut r0: Fq = fq(0);
+        let e1: u256 = PI.c0;
+        let e2: u256 = mul_nz(L1.c0, sqr_nz(challenges.alpha.c0, ORDER_NZ), ORDER_NZ);
+        let mut e3a = add_nz(
+            proof.eval_a.c0, mul_nz(challenges.beta.c0, proof.eval_s1.c0, ORDER_NZ), ORDER_NZ
+        );
+        e3a = add_nz(proof.eval_a.c0, challenges.gamma.c0, ORDER_NZ);
+
+        let mut e3b = add_nz(
+            proof.eval_b.c0, mul_nz(challenges.beta.c0, proof.eval_s2.c0, ORDER_NZ), ORDER_NZ
+        );
+        e3b = add_nz(proof.eval_b.c0, challenges.gamma.c0, ORDER_NZ);
+
+        let mut e3c = add_nz(proof.eval_c.c0, challenges.gamma.c0, ORDER_NZ);
+
+        let mut e3 = mul_nz(mul_nz(e3a, e3b, ORDER_NZ), e3c, ORDER_NZ);
+        e3 = mul_nz(e3, proof.eval_zw.c0, ORDER_NZ);
+        e3 = mul_nz(e3, challenges.alpha.c0, ORDER_NZ);
+
+        let r0 = sub(sub(e1, e2, ORDER), e3, ORDER);
+        println!("r0:{:?} ", r0);
+
+        fq(r0)
     }
 }
