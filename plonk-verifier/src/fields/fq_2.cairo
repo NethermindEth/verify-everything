@@ -14,10 +14,6 @@ struct Fq2 {
     c1: Fq,
 }
 
-// Extension field is represented as two number with X (a root of an polynomial in Fq which doesn't exist in Fq).
-// X for field extension is equivalent to imaginary i for real numbers.
-// number a: Fq2 = (a0, a1), mathematically, a = a0 + a1 * X
-
 #[inline(always)]
 fn fq2(c0: u256, c1: u256) -> Fq2 {
     Fq2 { c0: fq(c0), c1: fq(c1), }
@@ -132,9 +128,6 @@ impl Fq2MulShort of FieldMulShortcuts<Fq2, (u512, u512)> {
         (C0.u512_sub_fq(rhs.c0), C1.u512_sub_fq(rhs.c1))
     }
 
-    // Faster Explicit Formulas for Computing Pairings over Ordinary Curves
-    // Algorithm 2 Multiplication in Fp2 without reduction (cost m~u = 3mu +8a)
-    // uppercase vars are u512, lower case are u256
     fn u_mul(self: Fq2, rhs: Fq2) -> (u512, u512) {
         // Input: a = (a0 + a1i) and b = (b0 + b1i) ∈ Fp2 Output: c = a·b = (c0 +c1i) ∈ Fp2
         let Fq2 { c0: a0, c1: a1 } = self;
@@ -155,9 +148,6 @@ impl Fq2MulShort of FieldMulShortcuts<Fq2, (u512, u512)> {
         (T4, T3)
     }
 
-    // Faster Explicit Formulas for Computing Pairings over Ordinary Curves
-    // Algorithm 7 Squaring in Fp2 without reduction (cost of s~u = 2mu + 3a)
-    // uppercase vars are u512, lower case are u256
     fn u_sqr(self: Fq2) -> (u512, u512) {
         let Fq2 { c0: a0, c1: a1 } = self;
 
@@ -194,30 +184,8 @@ impl Fq2Ops of FieldOps<Fq2> {
 
     #[inline(always)]
     fn mul(self: Fq2, rhs: Fq2) -> Fq2 {
-        // Aranha mul_u + 2r
         let field_nz = get_field_nz();
         self.u_mul(rhs).to_fq(field_nz)
-    // Karatsuba
-    // let Fq2{c0: a0, c1: a1 } = self;
-    // let Fq2{c0: b0, c1: b1 } = rhs;
-    // let v0 = a0 * b0;
-    // let v1 = a1 * b1;
-    // // v0 + βv1, β = -1
-    // let c0 = v0 - v1;
-    // // (a0 + a1) * (b0 + b1) - v0 - v1
-    // let c1 = a0.u_add(a1) * b0.u_add(b1) - v0 - v1;
-    // Fq2 { c0, c1 }
-    // Derived (schoolbook)
-    // let Fq2{c0: a0, c1: a1 } = self;
-    // let Fq2{c0: b0, c1: b1 } = rhs;
-    // // Multiplying ab in Fq2 mod X^2 + BETA
-    // // c = ab = a0*b0 + a0*b1*X + a1*b0*X + a0*b0*BETA
-    // // c = a0*b0 + a0*b0*BETA + (a0*b1 + a1*b0)*X
-    // // or c = (a0*b0 + a0*b0*BETA, a0*b1 + a1*b0)
-    // Fq2 { //
-    //  c0: a0 * b0 + a1 * b1.mul_by_nonresidue(), //
-    //  c1: a0 * b1 + a1 * b0, //
-    //  }
     }
 
     #[inline(always)]
@@ -240,23 +208,10 @@ impl Fq2Ops of FieldOps<Fq2> {
         // Aranha sqr_u + 2r
         let field_nz = get_field_nz();
         self.u_sqr().to_fq(field_nz)
-    // // Complex squaring
-    // let Fq2{c0: a0, c1: a1 } = self;
-    // let v = a0 * a1;
-    // // (a0 + a1) * (a0 + βa1) - v - βv, β = -1
-    // let c0 = a0.u_add(a1) * a0.u_add(-a1);
-    // // 2v
-    // let c1 = v + v;
-    // Fq2 { c0, c1 }
     }
 
     #[inline(always)]
     fn inv(self: Fq2, field_nz: NonZero<u256>) -> Fq2 {
-        // "High-Speed Software Implementation of the Optimal Ate Pairing
-        // over Barreto–Naehrig Curves"; Algorithm 8
-        // let t = (self.c0.sqr() - (self.c1.sqr().mul_by_nonresidue())).inv();
-        // Mul by non residue -1 makes negative
-        // Lazy reduction applied from Faster Explicit Formulas for Computing Pairings over Ordinary Curves
         let Fq2 { c0, c1 } = self;
         let t = u512_add(c0.u_sqr(), c1.u_sqr()).to_fq(field_nz).inv(field_nz);
         Fq2 { c0: c0 * t, c1: c1 * -t, }

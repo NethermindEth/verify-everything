@@ -3,8 +3,9 @@ mod plonk {
     mod constants;
     mod types;
     mod transcript;
+    mod utils;
     #[cfg(test)]
-    mod tests;
+    mod plonk_tests;
 }
 mod traits;
 use traits::{FieldOps, FieldUtils};
@@ -15,7 +16,7 @@ use curve::{groups as g, pairing};
 mod math {
     mod i257;
     mod fast_mod;
-// #[cfg(test)]
+    // #[cfg(test)]
 // mod fast_mod_tests;
 }
 use math::fast_mod;

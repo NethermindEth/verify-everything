@@ -1,12 +1,3 @@
-// [PASS] plonk_verifier::fields::fq_12_direct::direct_tower_tests::tower_to_direct_to_tower_test (gas: ~12)
-//         steps: 2422
-// [PASS] plonk_verifier::fields::fq_12_direct::direct_tower_tests::tower_to_direct_test (gas: ~6)
-//         steps: 1246
-// [PASS] plonk_verifier::fields::fq_12_direct::direct_tower_tests::direct_to_tower_test (gas: ~7)
-//         steps: 1307
-// [PASS] plonk_verifier::fields::fq_12_direct::direct_tower_tests::direct_to_tower_to_direct_test (gas: ~12)
-//         steps: 2392
-
 use plonk_verifier::curve::{scale_9, FIELD};
 use plonk_verifier::fields::{
     FieldUtils, FieldOps, FieldShortcuts, fq, Fq, Fq2, Fq6, Fq12, fq12, FS01234, FS034, FS01

@@ -192,7 +192,6 @@ fn frobenius_fq12() -> Array<Fq12> {
 }
 
 #[test]
-#[available_gas(50000000)]
 fn fq12_frobenius_all() {
     let frobenius_maps = frobenius_fq12();
     let input = *frobenius_maps[0];

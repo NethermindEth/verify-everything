@@ -27,14 +27,12 @@ fn u256_mod_ops() -> Array<u256> {
 }
 
 #[test]
-#[available_gas(0xf0000)]
 fn inv_one() {
     let one: Fq = FieldUtils::one();
     assert(one.inv(get_field_nz()) == one, 'incorrect inverse of one');
 }
 
 #[test]
-#[available_gas(0xf0000)]
 fn test_main() {
     let fq_res = ops();
     let u256_mod_res = u256_mod_ops();

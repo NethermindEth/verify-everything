@@ -1,5 +1,5 @@
 use core::traits::TryInto;
-use integer::{u512, u128_wide_mul,};
+use integer::{u512, u128_wide_mul};
 use super::{utils as u, reduce, u512_reduce};
 // scale u512 by u128 (for smaller numbers)
 // unreduced, returns u512 plus u128 (fifth limb) which needs handling

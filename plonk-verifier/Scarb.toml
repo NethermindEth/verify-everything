@@ -1,11 +1,17 @@
 [package]
 name = "plonk_verifier"
 version = "0.1.0"
-cairo-version = "2.6.2"
+cairo-version = "2.7.0-rc.3"
 
+[config.global]
+edition = "2024_07"
+
+[dev-dependencies]
+cairo_test = "2.7.0-rc.3"
 
 [dependencies] 
-starknet = ">=2.6.2" 
+starknet = ">=2.7.0-rc.3" 
+# cairo_pairing = { git = "https://github.com/shramee/cairo_pairing.git"}
 
 [[target.starknet-contract]]
 sierra = true

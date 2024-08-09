@@ -2,6 +2,8 @@ use plonk_verifier::traits::{FieldOps as FOps, FieldShortcuts as FShort};
 use plonk_verifier::fields::{TFqAdd, TFqSub, TFqMul, TFqDiv, TFqNeg};
 use plonk_verifier::fields::print::{FqPrintImpl, Fq2PrintImpl};
 use plonk_verifier::fields::{fq, Fq, fq2, Fq2};
+use core::fmt::{Display, Formatter, Error};
+
 use debug::PrintTrait as Print;
 
 type AffineG1 = Affine<Fq>;

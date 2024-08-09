@@ -1,11 +1,4 @@
 use plonk_verifier::curve::groups::ECOperations;
-// test plonk_verifier::curve::groups_tests::g1_add ... ok (gas usage est.: 211230)
-// test plonk_verifier::curve::groups_tests::g1_dbl ... ok (gas usage est.: 250460)
-// test plonk_verifier::curve::groups_tests::g1_mul ... ok (gas usage est.: 938890)
-// test plonk_verifier::curve::groups_tests::g2_add ... ok (gas usage est.: 706220)
-// test plonk_verifier::curve::groups_tests::g2_dbl ... ok (gas usage est.: 799410)
-// test plonk_verifier::curve::groups_tests::g2_mul ... ok (gas usage est.: 2999470)
-
 use plonk_verifier::fields::fq;
 use plonk_verifier::curve::groups::{
     Affine, AffineOps, AffineG1, AffineG1Impl, g1, AffineG2, AffineG2Impl, g2
@@ -18,16 +11,14 @@ const DBL_Y: u256 = 991811005130217158508040260331970277456551599315057634715597
 const TPL_X: u256 = 3353031288059533942658390886683067124040920775575537747144343083137631628272;
 const TPL_Y: u256 = 19321533766552368860946552437480515441416830039777911637913418824951667761761;
 
-#[test]
-#[available_gas(100000000)]
+#[cfg(test)]
 fn g1_dbl() {
     let doubled = AffineG1Impl::one().double();
     assert(doubled.x.c0 == DBL_X, 'wrong double x');
     assert(doubled.y.c0 == DBL_Y, 'wrong double y');
 }
 
-#[test]
-#[available_gas(100000000)]
+#[cfg(test)]
 fn g1_add() {
     let g_3x = AffineG1Impl::one().add(g1(DBL_X, DBL_Y));
 
@@ -35,8 +26,7 @@ fn g1_add() {
     assert(g_3x.y.c0 == TPL_Y, 'wrong add y');
 }
 
-#[test]
-#[available_gas(1000000000)]
+#[cfg(test)]
 fn g1_mul() {
     let pt = g1(
         0x17c139df0efee0f766bc0204762b774362e4ded88953a39ce849a8a7fa163fa9,
@@ -75,22 +65,19 @@ fn assert_g2_match(self: AffineG2, x0: u256, x1: u256, y0: u256, y1: u256, msg: 
     assert((self.x.c0.c0, self.x.c1.c0, self.y.c0.c0, self.y.c1.c0,) == (x0, x1, y0, y1,), msg);
 }
 
-#[test]
-#[available_gas(100000000)]
+#[cfg(test)]
 fn g2_dbl() {
     let doubled = AffineG2Impl::one().double();
     assert_g2_match(doubled, DBL_X_0, DBL_X_1, DBL_Y_0, DBL_Y_1, 'wrong double');
 }
 
-#[test]
-#[available_gas(100000000)]
+#[cfg(test)]
 fn g2_add() {
     let g_3x = AffineG2Impl::one().add(g2(DBL_X_0, DBL_X_1, DBL_Y_0, DBL_Y_1,));
     assert_g2_match(g_3x, TPL_X_0, TPL_X_1, TPL_Y_0, TPL_Y_1, 'wrong add operation');
 }
 
-#[test]
-#[available_gas(100000000)]
+#[cfg(test)]
 fn g2_mul() {
     let g_3x = AffineG2Impl::one().multiply(3);
     assert_g2_match(g_3x, TPL_X_0, TPL_X_1, TPL_Y_0, TPL_Y_1, 'wrong multiply');

@@ -61,7 +61,6 @@ fn axb() -> Fq2 {
     )
 }
 #[test]
-#[available_gas(2000000)]
 fn add_sub() {
     let a = fq2(34, 645);
     let b = fq2(25, 45);
@@ -71,7 +70,6 @@ fn add_sub() {
 }
 
 #[test]
-#[available_gas(200000000)]
 fn mul() {
     let a = a();
     let b = b();
@@ -80,7 +78,6 @@ fn mul() {
 }
 
 #[test]
-#[available_gas(200000000)]
 fn mul_aggregate() {
     let arr = fq2_arr().span();
 
@@ -120,7 +117,6 @@ fn mul_aggregate() {
 }
 
 #[test]
-#[available_gas(200000000)]
 fn mul_assoc() {
     let a = fq2(34, 645);
     let b = fq2(25, 45);
@@ -134,7 +130,6 @@ fn mul_assoc() {
 }
 
 #[test]
-#[available_gas(2000000)]
 fn div() {
     let a = fq2(34, 645);
     let b = fq2(25, 45);
@@ -143,7 +138,6 @@ fn div() {
 }
 
 #[test]
-#[available_gas(2000000)]
 fn inv() {
     let field_nz = get_field_nz();
     let a = fq2(34, 645);
@@ -162,7 +156,6 @@ fn inv() {
 }
 
 #[test]
-#[available_gas(0xf0000)]
 fn inv_one() {
     let one: Fq2 = FieldUtils::one();
     let one_inv = one.inv(get_field_nz());
@@ -170,21 +163,18 @@ fn inv_one() {
 }
 
 #[test]
-#[available_gas(5000000)]
 fn sqr() {
     assert(a() * a() == a().sqr(), 'incorrect mul');
     assert(b() * b() == b().sqr(), 'incorrect mul');
 }
 
 #[test]
-#[available_gas(5000000)]
 fn non_residue() {
     let a_nr = a().mul_by_nonresidue();
     assert(a_nr == a() * fq2(9, 1), 'incorrect non_residue mul')
 }
 
 #[test]
-#[available_gas(5000000)]
 fn non_residue_u512() {
     let field_nz = get_field_nz();
     let AB = a().u_mul(b());
