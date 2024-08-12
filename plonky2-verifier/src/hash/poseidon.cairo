@@ -339,8 +339,8 @@ pub fn hash_n_to_m_no_pad(inputs: Span<Goldilocks>, num_outputs: usize) -> Span<
 
 pub fn hash_two_to_one(x: HashOut, y: HashOut) -> HashOut {
     let mut perm = Permuter::default();
-    perm.set_from_slice(x.elemets, 0);
-    perm.set_from_slice(y.elemets, 4);
+    perm.set_from_slice(x.elements, 0);
+    perm.set_from_slice(y.elements, 4);
 
     perm.permute();
 
