@@ -370,19 +370,4 @@ impl PlonkVerifier of PVerifier {
 
         res
     }
-    // function calculateE(curve, proof, challenges, r0) {
-//     const G1 = curve.G1;
-//     const Fr = curve.Fr;
-
-    //     let e = Fr.add(Fr.neg(r0), Fr.mul(challenges.v[1], proof.eval_a));
-//     e = Fr.add(e, Fr.mul(challenges.v[2], proof.eval_b));
-//     e = Fr.add(e, Fr.mul(challenges.v[3], proof.eval_c));
-//     e = Fr.add(e, Fr.mul(challenges.v[4], proof.eval_s1));
-//     e = Fr.add(e, Fr.mul(challenges.v[5], proof.eval_s2));
-//     e = Fr.add(e, Fr.mul(challenges.u, proof.eval_zw));
-
-    //     const res = G1.timesFr(G1.one, e);
-
-    //     return res;
-// }
 }
