@@ -245,6 +245,11 @@ fn neg(b: u256) -> u256 {
 }
 
 #[inline(always)]
+fn neg_o(b: u256) -> u256 {
+    m::neg(b, ORDER)
+}
+
+#[inline(always)]
 fn add(mut a: u256, mut b: u256) -> u256 {
     m::add(a, b, FIELD)
 }

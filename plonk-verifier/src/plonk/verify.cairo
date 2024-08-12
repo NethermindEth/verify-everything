@@ -18,7 +18,7 @@ use plonk_verifier::fields::{fq, Fq};
 use plonk_verifier::curve::constants::{ORDER, ORDER_NZ};
 use plonk_verifier::plonk::types::{PlonkProof, PlonkVerificationKey, PlonkChallenge};
 use plonk_verifier::plonk::transcript::{Transcript, TranscriptElement};
-use plonk_verifier::curve::{u512, sqr_nz, mul, mul_u, mul_nz, div_nz, add_nz, sub_u, sub};
+use plonk_verifier::curve::{u512, neg_o, sqr_nz, mul, mul_u, mul_nz, div_nz, add_nz, sub_u, sub};
 
 #[generate_trait]
 impl PlonkVerifier of PVerifier {
@@ -60,9 +60,15 @@ impl PlonkVerifier of PVerifier {
         let mut PI = Self::compute_PI(publicSignals.clone(), L.clone());
 
         let mut R0 = Self::compute_R0(proof.clone(), challenges, PI, L[1].clone());
+
         let mut D = Self::compute_D(
             proof.clone(), challenges, verification_key.clone(), L[1].clone()
         );
+
+        let F = Self::compute_F(proof, challenges, verification_key, D);
+
+        let E = Self::compute_E(proof, challenges, R0);
+
         result
     }
 
@@ -162,10 +168,10 @@ impl PlonkVerifier of PVerifier {
         v_transcript.add_scalar(proof.eval_zw);
 
         challenges.v1 = v_transcript.get_challenge();
-        challenges.v2 = challenges.v1.mul(challenges.v1.clone());
-        challenges.v3 = challenges.v2.mul(challenges.v1.clone());
-        challenges.v4 = challenges.v3.mul(challenges.v1.clone());
-        challenges.v5 = challenges.v4.mul(challenges.v1.clone());
+        challenges.v2 = fq(mul_nz(challenges.v1.c0, challenges.v1.c0, ORDER_NZ));
+        challenges.v3 = fq(mul_nz(challenges.v2.c0, challenges.v1.c0, ORDER_NZ));
+        challenges.v4 = fq(mul_nz(challenges.v3.c0, challenges.v1.c0, ORDER_NZ));
+        challenges.v5 = fq(mul_nz(challenges.v4.c0, challenges.v1.c0, ORDER_NZ));
 
         // Challenge: u
         let mut u_transcript = Transcript::new();
@@ -326,4 +332,57 @@ impl PlonkVerifier of PVerifier {
 
         d
     }
+
+    // step 10: Compute full batched polynomial commitment F
+    fn compute_F(
+        proof: PlonkProof, challenges: PlonkChallenge, vk: PlonkVerificationKey, D: AffineG1
+    ) -> AffineG1 {
+        let mut v1a = proof.A.multiply(challenges.v1.c0);
+        let res_add_d = v1a.add(D);
+
+        let v2b = proof.B.multiply(challenges.v2.c0);
+        let res_add_v2b = res_add_d.add(v2b);
+
+        let v3c = proof.C.multiply(challenges.v3.c0);
+        let res_add_v3c = res_add_v2b.add(v3c);
+
+        let v4s1 = vk.S1.multiply(challenges.v4.c0);
+        let res_add_v4s1 = res_add_v3c.add(v4s1);
+
+        let v5s2 = vk.S2.multiply(challenges.v5.c0);
+        let res = res_add_v4s1.add(v5s2);
+
+        res
+    }
+
+    fn compute_E(proof: PlonkProof, challenges: PlonkChallenge, r0: Fq) -> AffineG1 {
+        let mut res: AffineG1 = g1(1, 2);
+        let neg_r0 = neg_o(r0.c0);
+        let mut e = add_nz(neg_r0, mul_nz(challenges.v1.c0, proof.eval_a.c0, ORDER_NZ), ORDER_NZ);
+
+        e = add_nz(e, mul_nz(challenges.v2.c0, proof.eval_b.c0, ORDER_NZ), ORDER_NZ);
+        e = add_nz(e, mul_nz(challenges.v3.c0, proof.eval_c.c0, ORDER_NZ), ORDER_NZ);
+        e = add_nz(e, mul_nz(challenges.v4.c0, proof.eval_s1.c0, ORDER_NZ), ORDER_NZ);
+        e = add_nz(e, mul_nz(challenges.v5.c0, proof.eval_s2.c0, ORDER_NZ), ORDER_NZ);
+        e = add_nz(e, mul_nz(challenges.u.c0, proof.eval_zw.c0, ORDER_NZ), ORDER_NZ);
+
+        res = res.multiply(e);
+
+        res
+    }
+    // function calculateE(curve, proof, challenges, r0) {
+//     const G1 = curve.G1;
+//     const Fr = curve.Fr;
+
+    //     let e = Fr.add(Fr.neg(r0), Fr.mul(challenges.v[1], proof.eval_a));
+//     e = Fr.add(e, Fr.mul(challenges.v[2], proof.eval_b));
+//     e = Fr.add(e, Fr.mul(challenges.v[3], proof.eval_c));
+//     e = Fr.add(e, Fr.mul(challenges.v[4], proof.eval_s1));
+//     e = Fr.add(e, Fr.mul(challenges.v[5], proof.eval_s2));
+//     e = Fr.add(e, Fr.mul(challenges.u, proof.eval_zw));
+
+    //     const res = G1.timesFr(G1.one, e);
+
+    //     return res;
+// }
 }
