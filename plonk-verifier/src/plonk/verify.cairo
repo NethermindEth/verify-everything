@@ -12,13 +12,14 @@ use plonk_verifier::traits::FieldShortcuts;
 use plonk_verifier::traits::FieldOps;
 use plonk_verifier::traits::FieldMulShortcuts;
 use plonk_verifier::plonk::transcript::Keccak256Transcript;
-use plonk_verifier::curve::groups::{g1, g2, AffineG1, AffineG2};
+use plonk_verifier::curve::groups::{g1, g2, AffineG1, AffineG2, AffineG2Impl};
 use plonk_verifier::curve::groups::ECOperations;
-use plonk_verifier::fields::{fq, Fq};
+use plonk_verifier::fields::{fq, Fq, Fq12};
 use plonk_verifier::curve::constants::{ORDER, ORDER_NZ};
 use plonk_verifier::plonk::types::{PlonkProof, PlonkVerificationKey, PlonkChallenge};
 use plonk_verifier::plonk::transcript::{Transcript, TranscriptElement};
 use plonk_verifier::curve::{u512, neg_o, sqr_nz, mul, mul_u, mul_nz, div_nz, add_nz, sub_u, sub};
+use plonk_verifier::pairing::tate_bkls::{tate_pairing, tate_miller_loop};
 
 #[generate_trait]
 impl PlonkVerifier of PVerifier {
@@ -69,6 +70,8 @@ impl PlonkVerifier of PVerifier {
 
         let E = Self::compute_E(proof, challenges, R0);
 
+        let valid_pairing = Self::valid_pairing(proof, challenges, verification_key, E, F);
+        result = result && valid_pairing;
         result
     }
 
@@ -355,6 +358,7 @@ impl PlonkVerifier of PVerifier {
         res
     }
 
+    // step 11: Compute group-encoded batch evaluation E
     fn compute_E(proof: PlonkProof, challenges: PlonkChallenge, r0: Fq) -> AffineG1 {
         let mut res: AffineG1 = g1(1, 2);
         let neg_r0 = neg_o(r0.c0);
@@ -368,6 +372,53 @@ impl PlonkVerifier of PVerifier {
 
         res = res.multiply(e);
 
+        res
+    }
+
+    //step 12: Elliptic Curve Pairing: Batch validate all evaluations
+    fn valid_pairing(
+        proof: PlonkProof,
+        challenges: PlonkChallenge,
+        vk: PlonkVerificationKey,
+        E: AffineG1,
+        F: AffineG1
+    ) -> bool {
+        let mut A1 = proof.Wxi;
+
+        let Wxiw_mul_u = proof.Wxiw.multiply(challenges.u.c0);
+        A1 = A1.add(Wxiw_mul_u);
+
+        let mut B1 = proof.Wxi.multiply(challenges.xi.c0);
+        let s = mul_nz(mul_nz(challenges.u.c0, challenges.xi.c0, ORDER_NZ), vk.w, ORDER_NZ);
+
+        let Wxiw_mul_s = proof.Wxiw.multiply(s);
+        B1 = B1.add(Wxiw_mul_s);
+
+        B1 = B1.add(F);
+
+        B1 = B1.add(E.neg());
+
+        let g2_one = AffineG2Impl::one();
+        println!("A1.neg() x: {:?}", A1.neg().x.c0);
+        println!("A1.neg() y: {:?}", A1.neg().y.c0);
+        println!("B1 x: {:?}", B1.x.c0);
+        println!("B1 y: {:?}", B1.y.c0);
+
+        println!("v2_x2_x: {:?}", vk.X_2.x.c0);
+        println!("v2_x2_x: {:?}", vk.X_2.x.c1);
+        println!("v2_x2_y: {:?}", vk.X_2.y.c0);
+        println!("v2_x2_y: {:?}", vk.X_2.y.c1);
+
+        println!("g2_one_x1: {:?}", g2_one.x.c0);
+        println!("g2_one_x2: {:?}", g2_one.x.c1);
+        println!("g2_one_y1: {:?}", g2_one.y.c0);
+        println!("g2_one_y2: {:?}", g2_one.y.c1);
+
+        let e_A1_vk_x2 = tate_miller_loop(A1.neg(), vk.X_2);
+        let e_B1_g2_1 = tate_miller_loop(B1, g2_one);
+        println!("e_A1_vk_x2: {:?}", e_A1_vk_x2);
+        println!("e_B1_g2_1: {:?}", e_B1_g2_1);
+        let res = e_A1_vk_x2 == e_B1_g2_1;
         res
     }
 }

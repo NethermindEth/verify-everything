@@ -8,6 +8,7 @@ mod plonk_tests {
     use plonk_verifier::curve::groups::{g1, g2, AffineG1, AffineG2};
 
     #[test]
+    #[available_gas(2000000000000)]
     fn test_plonk_verify() {
         // verification PlonkVerificationKey
         let (n, power, k1, k2, nPublic, nLagrange, Qm, Ql, Qr, Qo, Qc, S1, S2, S3, X_2, w) =
