@@ -1,5 +1,9 @@
+use core::box::BoxTrait;
+use core::option::OptionTrait;
+use core::array::ArrayTrait;
 use plonky2_verifier::fields::goldilocks::{Goldilocks};
 use plonky2_verifier::fields::goldilocks_quadratic::{GoldilocksQuadratic};
+use plonky2_verifier::fields::utils::{sum_array, max_array, pow, shift_left};
 
 pub struct FriOracleInfo {
     pub num_polys: u32,
@@ -73,3 +77,30 @@ pub struct FriParams {
     pub reduction_arity_bits: Array<u32>,
 }
 
+
+#[generate_trait]
+pub impl FriParamsImpl of FriParamsTrait {
+    fn total_arities(self: @FriParams) -> u32 {
+        sum_array(self.reduction_arity_bits.span())
+    }
+
+    fn max_arity_bits(self: @FriParams) -> u32 {
+        max_array(self.reduction_arity_bits.span())
+    }
+
+    fn lde_bits(self: @FriParams) -> u32 {
+        *self.degree_bits + *self.config.rate_bits
+    }
+
+    fn lde_size(self: @FriParams) -> u32 {
+        shift_left(1, self.lde_bits())
+    }
+
+    fn final_poly_bits(self: @FriParams) -> u32 {
+        *self.degree_bits - self.total_arities()
+    }
+
+    fn final_poly_len(self: @FriParams) -> u32 {
+        shift_left(1, self.final_poly_bits())
+    }
+}
