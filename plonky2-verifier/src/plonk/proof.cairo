@@ -69,10 +69,7 @@ pub mod tests {
     #[test]
     fn test_load_sample_proof() {
         let proof = get_proof();
-        println!(
-            "{:?}",
-            proof
-        );
+        println!("{:?}", proof);
     // println!("{:?}", proof);
     }
 }
