@@ -3,13 +3,19 @@ use core::result::ResultTrait;
 use core::traits::TryInto;
 use core::integer::U128MulGuarantee;
 
-use plonky2_verifier::fields::goldilocks::{Goldilocks, gl, GoldilocksImpl};
+use plonky2_verifier::fields::goldilocks::{Goldilocks, GoldilocksZero, gl, GoldilocksImpl};
 
 #[derive(Copy, Drop, Debug, PartialEq, Eq)]
 pub struct GoldilocksQuadratic {
     pub a: Goldilocks,
     pub b: Goldilocks,
 }
+
+const W: Goldilocks =
+    Goldilocks {
+        inner: 7
+    }; // Element W of BaseField, such that `X^d - W` is irreducible over BaseField.
+
 
 #[generate_trait]
 pub impl GoldilocksQuadraticImpl of GoldilocksQuadraticTrait {
@@ -43,8 +49,6 @@ pub impl GoldilocksQuadraticSub of core::traits::Sub<GoldilocksQuadratic> {
 }
 pub impl GoldilocksQuadraticMul of core::traits::Mul<GoldilocksQuadratic> {
     fn mul(lhs: GoldilocksQuadratic, rhs: GoldilocksQuadratic) -> GoldilocksQuadratic {
-        let W = gl(7); // Element W of BaseField, such that `X^d - W` is irreducible over BaseField.
-
         let a0 = lhs.a;
         let a1 = lhs.b;
 
@@ -60,28 +64,29 @@ pub impl GoldilocksQuadraticMul of core::traits::Mul<GoldilocksQuadratic> {
 
 pub impl GoldilocksQuadraticZero of core::num::traits::Zero<GoldilocksQuadratic> {
     fn zero() -> GoldilocksQuadratic {
-        GoldilocksQuadratic { a: gl(0), b: gl(0) }
+        GoldilocksQuadratic { a: Goldilocks { inner: 0 }, b: Goldilocks { inner: 0 } }
     }
     fn is_zero(self: @GoldilocksQuadratic) -> bool {
-        *self.a == gl(0) && *self.b == gl(0)
+        *self.a == Goldilocks { inner: 0 } && *self.b == Goldilocks { inner: 0 }
     }
     fn is_non_zero(self: @GoldilocksQuadratic) -> bool {
-        *self.a != gl(0) || *self.b != gl(0)
+        *self.a != Goldilocks { inner: 0 } || *self.b != Goldilocks { inner: 0 }
     }
 }
 
 
 pub impl GoldilocksQuadraticOne of core::num::traits::One<GoldilocksQuadratic> {
     fn one() -> GoldilocksQuadratic {
-        GoldilocksQuadratic { a: gl(1), b: gl(0) }
+        GoldilocksQuadratic { a: gl(1), b: Goldilocks { inner: 0 } }
     }
     fn is_one(self: @GoldilocksQuadratic) -> bool {
-        *self.a == gl(1) && *self.b == gl(0)
+        *self.a == Goldilocks { inner: 1 } && *self.b == Goldilocks { inner: 0 }
     }
     fn is_non_one(self: @GoldilocksQuadratic) -> bool {
-        *self.a != gl(1) || *self.b != gl(0)
+        *self.a != Goldilocks { inner: 1 } || *self.b != Goldilocks { inner: 0 }
     }
 }
+
 
 pub impl GoldilocksQuadraticNeg of Neg<GoldilocksQuadratic> {
     fn neg(a: GoldilocksQuadratic) -> GoldilocksQuadratic {
