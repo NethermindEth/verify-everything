@@ -65,11 +65,4 @@ pub struct ProofWithPublicInputs {
 pub mod tests {
     use plonky2_verifier::plonk::proof::{Proof};
     use plonky2_verifier::plonk::test_constants::{get_proof};
-
-    #[test]
-    fn test_load_sample_proof() {
-        let proof = get_proof();
-        println!("{:?}", proof);
-    // println!("{:?}", proof);
-    }
 }

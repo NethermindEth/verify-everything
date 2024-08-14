@@ -1,8 +1,10 @@
 use core::box::BoxTrait;
 use core::option::OptionTrait;
 use core::array::ArrayTrait;
-use plonky2_verifier::fields::goldilocks::{Goldilocks};
-use plonky2_verifier::fields::goldilocks_quadratic::{GoldilocksQuadratic};
+use plonky2_verifier::fields::goldilocks::{Goldilocks, GoldilocksZero};
+use plonky2_verifier::fields::goldilocks_quadratic::{
+    GoldilocksQuadratic, GoldilocksQuadraticZero, glq
+};
 use plonky2_verifier::fields::utils::{sum_array, max_array, pow, shift_left};
 
 pub struct FriOracleInfo {
@@ -78,6 +80,40 @@ pub struct FriParams {
 }
 
 
+#[derive(Drop)]
+pub struct ReducingFactor {
+    pub base: GoldilocksQuadratic,
+    pub count: u64,
+}
+
+#[generate_trait]
+impl ReducingFactorImpl of ReducingFactorTrait {
+    fn new(base: GoldilocksQuadratic) -> ReducingFactor {
+        ReducingFactor { base: base, count: 0 }
+    }
+
+    fn mul(ref self: ReducingFactor, x: GoldilocksQuadratic) -> GoldilocksQuadratic {
+        self.count += 1;
+        self.base * x
+    }
+
+    fn reduce(
+        ref self: ReducingFactor, batch_values: Span<GoldilocksQuadratic>
+    ) -> GoldilocksQuadratic {
+        let mut acc = GoldilocksQuadraticZero::zero();
+
+        // reverse the array
+        let mut i = batch_values.len();
+        while i > 0 {
+            i -= 1;
+            let value = *batch_values.get(i).unwrap().unbox();
+            acc = self.mul(acc) + value;
+        };
+
+        acc
+    }
+}
+
 #[generate_trait]
 pub impl FriParamsImpl of FriParamsTrait {
     fn total_arities(self: @FriParams) -> u32 {
@@ -102,5 +138,53 @@ pub impl FriParamsImpl of FriParamsTrait {
 
     fn final_poly_len(self: @FriParams) -> u32 {
         shift_left(1, self.final_poly_bits())
+    }
+}
+
+pub struct PrecomputedReducedOpenings {
+    pub reduced_openings_at_point: Array<GoldilocksQuadratic>
+}
+
+#[generate_trait]
+impl PrecomputedReducedOpeningsImpl of PrecomputedReducedOpeningsTrait {
+    fn from_os_and_alpha(
+        openings: @FriOpenings, alpha: @GoldilocksQuadratic
+    ) -> PrecomputedReducedOpenings {
+        let mut reduced_openings_at_point = array![];
+
+        PrecomputedReducedOpenings { reduced_openings_at_point }
+    }
+}
+
+
+#[cfg(test)]
+pub mod tests {
+    use super::{ReducingFactor, ReducingFactorImpl, GoldilocksQuadratic, glq};
+
+    #[test]
+    fn test_reduce() {
+        let base = glq(10);
+        let mut values = array![
+            glq(0),
+            glq(1),
+            glq(2),
+            glq(3),
+            glq(4),
+            glq(5),
+            glq(6),
+            glq(7),
+            glq(8),
+            glq(9),
+            glq(10),
+            glq(11),
+            glq(12),
+            glq(13),
+            glq(14),
+            glq(15)
+        ];
+
+        let mut reducing_factor = ReducingFactorImpl::new(base);
+        let result = reducing_factor.reduce(values.span());
+        assert_eq!(result, glq(16543209876543210));
     }
 }
