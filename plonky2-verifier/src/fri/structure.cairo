@@ -7,11 +7,13 @@ use plonky2_verifier::fields::goldilocks_quadratic::{
 };
 use plonky2_verifier::fields::utils::{sum_array, max_array, pow, shift_left};
 
+#[derive(Drop)]
 pub struct FriOracleInfo {
     pub num_polys: u32,
     pub blinding: bool
 }
 
+#[derive(Drop)]
 pub struct FriPolynomialInfo {
     /// Index into `FriInstanceInfo`'s `oracles` list.
     pub oracle_index: u32,
@@ -20,12 +22,14 @@ pub struct FriPolynomialInfo {
 }
 
 /// A batch of openings at a particular point.
+#[derive(Drop)]
 pub struct FriBatchInfo {
     pub point: GoldilocksQuadratic,
     pub polynomials: Array<FriPolynomialInfo>
 }
 
 /// Describes an instance of a FRI-based batch opening.
+#[derive(Drop)]
 pub struct FriInstanceInfo {
     /// The oracles involved, not counting oracles created during the commit phase.
     pub oracles: Array<FriOracleInfo>,
@@ -34,15 +38,18 @@ pub struct FriInstanceInfo {
 }
 
 /// Opened values of each polynomial that's opened at a particular point.
+#[derive(Drop, Copy)]
 pub struct FriOpeningBatch {
-    pub values: Array<GoldilocksQuadratic>
+    pub values: Span<GoldilocksQuadratic>
 }
 
 /// Opened values of each polynomial.
+#[derive(Drop)]
 pub struct FriOpenings {
     pub batches: Array<FriOpeningBatch>
 }
 
+#[derive(Drop)]
 pub struct FriChallenges {
     // Scaling factor to combine polynomials.
     pub fri_alpha: GoldilocksQuadratic,
@@ -53,11 +60,13 @@ pub struct FriChallenges {
     pub fri_oracle_indices: Array<u32>,
 }
 
+#[derive(Drop)]
 pub enum FriReductionStrategy {
     Fixed: Array<u32>,
     ConstantArityBits: (u32, u32),
 }
 
+#[derive(Drop)]
 pub struct FriConfig {
     pub rate_bits: u32,
     pub cap_height: u32,
@@ -66,6 +75,7 @@ pub struct FriConfig {
     pub num_query_rounds: u32,
 }
 
+#[derive(Drop)]
 pub struct FriParams {
     pub config: FriConfig,
     /// Whether to use a hiding variant of Merkle trees (where random salts are added to leaves).
@@ -141,6 +151,7 @@ pub impl FriParamsImpl of FriParamsTrait {
     }
 }
 
+#[derive(Drop, Debug, PartialEq, Eq)]
 pub struct PrecomputedReducedOpenings {
     pub reduced_openings_at_point: Array<GoldilocksQuadratic>
 }
@@ -152,6 +163,17 @@ impl PrecomputedReducedOpeningsImpl of PrecomputedReducedOpeningsTrait {
     ) -> PrecomputedReducedOpenings {
         let mut reduced_openings_at_point = array![];
 
+        let mut i = 0;
+        let len = openings.batches.len();
+
+        while i < len {
+            let batch = *openings.batches.get(i).unwrap().unbox();
+            let mut reducing_factor = ReducingFactorImpl::new(*alpha);
+            let reduced = reducing_factor.reduce(batch.values);
+            reduced_openings_at_point.append(reduced);
+            i += 1;
+        };
+
         PrecomputedReducedOpenings { reduced_openings_at_point }
     }
 }
@@ -159,32 +181,53 @@ impl PrecomputedReducedOpeningsImpl of PrecomputedReducedOpeningsTrait {
 
 #[cfg(test)]
 pub mod tests {
-    use super::{ReducingFactor, ReducingFactorImpl, GoldilocksQuadratic, glq};
+    use super::{
+        ReducingFactor, FriOpeningBatch, FriOpenings, PrecomputedReducedOpeningsImpl,
+        ReducingFactorImpl, GoldilocksQuadratic, glq
+    };
+    #[cairofmt::skip]
+    fn glq_0_15() -> Array<GoldilocksQuadratic> {
+        array![
+            glq(0), glq(1), glq(2), glq(3), glq(4),
+            glq(5), glq(6), glq(7), glq(8), glq(9),
+            glq(10), glq(11), glq(12), glq(13), glq(14),
+            glq(15)
+        ]
+    }
+    #[cairofmt::skip]
+    fn glq_15_31() -> Array<GoldilocksQuadratic> {
+        array![
+            glq(15), glq(16), glq(17), glq(18), glq(19),
+            glq(20), glq(21), glq(22), glq(23), glq(24),
+            glq(25), glq(26), glq(27), glq(28), glq(29),
+            glq(30), glq(31)
+        ]
+    }
 
     #[test]
     fn test_reduce() {
         let base = glq(10);
-        let mut values = array![
-            glq(0),
-            glq(1),
-            glq(2),
-            glq(3),
-            glq(4),
-            glq(5),
-            glq(6),
-            glq(7),
-            glq(8),
-            glq(9),
-            glq(10),
-            glq(11),
-            glq(12),
-            glq(13),
-            glq(14),
-            glq(15)
-        ];
 
         let mut reducing_factor = ReducingFactorImpl::new(base);
-        let result = reducing_factor.reduce(values.span());
+        let result = reducing_factor.reduce(glq_0_15().span());
         assert_eq!(result, glq(16543209876543210));
+    }
+
+    #[test]
+    fn test_opening() {
+        let alpha = glq(10);
+        let openings = FriOpenings {
+            batches: array![
+                FriOpeningBatch { values: glq_0_15().span() },
+                FriOpeningBatch { values: glq_15_31().span() }
+            ]
+        };
+
+        let precomputed = PrecomputedReducedOpeningsImpl::from_os_and_alpha(@openings, @alpha);
+
+        assert_eq!(
+            precomputed.reduced_openings_at_point,
+            array![glq(16543209876543210), glq(343209876543209875)]
+        );
     }
 }
