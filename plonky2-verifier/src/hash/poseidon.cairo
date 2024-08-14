@@ -10,6 +10,9 @@ use plonky2_verifier::hash::poseidon_state::PoseidonStateArrarTrait;
 use plonky2_verifier::hash::poseidon_state::{
     PoseidonState, PoseidonStateArray, HashOut, HashOutImpl
 };
+
+use core::cmp::{min, max};
+
 use plonky2_verifier::hash::poseidon_constants::{
     ALL_ROUND_CONSTANTS, HALF_N_FULL_ROUNDS, MDS_MATRIX_CIRC, MDS_MATRIX_DIAG, SPONGE_WIDTH,
     SPONGE_RATE, FAST_PARTIAL_ROUND_VS, FAST_PARTIAL_ROUND_W_HATS,
@@ -285,22 +288,6 @@ impl PoseidonTrait of Poseidon {
         };
 
         result
-    }
-}
-
-fn min(a: usize, b: usize) -> usize {
-    if a < b {
-        a
-    } else {
-        b
-    }
-}
-
-fn max(a: usize, b: usize) -> usize {
-    if a > b {
-        a
-    } else {
-        b
     }
 }
 
