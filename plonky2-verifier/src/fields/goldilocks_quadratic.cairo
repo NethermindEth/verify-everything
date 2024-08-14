@@ -111,8 +111,8 @@ mod tests {
         let a = glq(3);
         let b = glq(5);
         let c = a + b;
-        assert_eq!(c.a, gl(8));
-        assert_eq!(c.b, gl(0));
+        let expected = GoldilocksQuadratic { a: gl(8), b: gl(0) };
+        assert_eq!(c, expected);
     }
 
     #[test]
@@ -120,8 +120,8 @@ mod tests {
         let a = glq(3);
         let b = glq(5);
         let c = a - b;
-        assert_eq!(c.a, gl(3) - gl(5));
-        assert_eq!(c.b, gl(0));
+        let expected = GoldilocksQuadratic { a: gl(3) - gl(5), b: gl(0) };
+        assert_eq!(c, expected);
     }
 
     #[test]
@@ -129,29 +129,50 @@ mod tests {
         let a = glq(3);
         let b = glq(5);
         let c = a * b;
-        assert_eq!(c.a, gl(15));
-        assert_eq!(c.b, gl(0));
+        let expected = GoldilocksQuadratic { a: gl(15), b: gl(0) };
+        assert_eq!(c, expected);
     }
 
     #[test]
     fn test_goldilocks_quadratic_zero() {
         let a = GoldilocksQuadraticZero::zero();
-        assert_eq!(a.a, gl(0));
-        assert_eq!(a.b, gl(0));
+        assert_eq!(a, GoldilocksQuadratic { a: gl(0), b: gl(0) });
     }
 
     #[test]
     fn test_goldilocks_quadratic_one() {
         let a = GoldilocksQuadraticOne::one();
-        assert_eq!(a.a, gl(1));
-        assert_eq!(a.b, gl(0));
+        assert_eq!(a, GoldilocksQuadratic { a: gl(1), b: gl(0) });
     }
 
     #[test]
     fn test_goldilocks_quadratic_neg() {
         let a = glq(3);
         let b = -a;
-        assert_eq!(b.a, -gl(3));
-        assert_eq!(b.b, gl(0));
+        let expected = GoldilocksQuadratic { a: gl(0) - gl(3), b: gl(0) };
+        assert_eq!(b, expected);
+    }
+
+    #[test]
+    fn test_goldilocks_quadratic_eq() {
+        let a = glq(3);
+        let b = glq(3);
+        assert_eq!(a, b);
+    }
+
+    #[test]
+    fn test_goldilocks_quadratic_ne() {
+        let a = glq(3);
+        let b = glq(5);
+        assert_ne!(a, b);
+    }
+
+    #[test]
+    fn test_add_ab() {
+        let a = GoldilocksQuadratic { a: gl(3), b: gl(5) };
+        let b = GoldilocksQuadratic { a: gl(7), b: gl(11) };
+        let c = a + b;
+        let expected = GoldilocksQuadratic { a: gl(10), b: gl(16) };
+        assert_eq!(c, expected);
     }
 }
