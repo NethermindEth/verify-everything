@@ -6,14 +6,12 @@ use core::to_byte_array::FormatAsByteArray;
 use core::traits::Into;
 use plonky2_verifier::fields::goldilocks::GoldilocksTrait;
 use plonky2_verifier::fields::goldilocks::{Goldilocks, gl};
-use plonky2_verifier::hash::poseidon_state::PoseidonStateArrarTrait;
-use plonky2_verifier::hash::poseidon_state::{
-    PoseidonState, PoseidonStateArray, HashOut, HashOutImpl
-};
+use plonky2_verifier::hash::structure::PoseidonStateArrarTrait;
+use plonky2_verifier::hash::structure::{PoseidonState, PoseidonStateArray, HashOut, HashOutImpl};
 
 use core::cmp::{min, max};
 
-use plonky2_verifier::hash::poseidon_constants::{
+use plonky2_verifier::hash::constants::{
     ALL_ROUND_CONSTANTS, HALF_N_FULL_ROUNDS, MDS_MATRIX_CIRC, MDS_MATRIX_DIAG, SPONGE_WIDTH,
     SPONGE_RATE, FAST_PARTIAL_ROUND_VS, FAST_PARTIAL_ROUND_W_HATS,
     FAST_PARTIAL_FIRST_ROUND_CONSTANT, FAST_PARTIAL_ROUND_INITIAL_MATRIX, N_PARTIAL_ROUNDS,
@@ -334,6 +332,13 @@ pub fn hash_two_to_one(x: HashOut, y: HashOut) -> HashOut {
     HashOutImpl::new(perm.squeeze().slice(0, 4))
 }
 
+pub fn hash_n_to_hash_no_pad(input: Span<Goldilocks>) -> HashOut {
+    HashOutImpl::new(hash_n_to_m_no_pad(input, 4))
+}
+// hash_n_to_hash_no_pad could be used directly, however to keep the same interface as the original code, we define hash_no_pad
+pub fn hash_no_pad(input: Span<Goldilocks>) -> HashOut {
+    hash_n_to_hash_no_pad(input)
+}
 
 #[cfg(test)]
 mod tests {
@@ -343,7 +348,7 @@ mod tests {
     use super::{
         hash_n_to_m_no_pad, gl, PoseidonStateArray, PoseidonTrait, hash_two_to_one, HashOut
     };
-    use plonky2_verifier::hash::poseidon_state::{PoseidonState, HashOutImpl};
+    use plonky2_verifier::hash::structure::{PoseidonState, HashOutImpl};
 
     #[test]
     fn test_constant_layer() {
