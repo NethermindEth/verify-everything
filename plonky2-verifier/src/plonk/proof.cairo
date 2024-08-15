@@ -1,6 +1,9 @@
 use plonky2_verifier::merkle::merkle_caps::{MerkleCaps, MerkleProof};
 use plonky2_verifier::fields::goldilocks_quadratic::GoldilocksQuadratic;
 use plonky2_verifier::fields::goldilocks::Goldilocks;
+use plonky2_verifier::hash::poseidon::hash_no_pad;
+use plonky2_verifier::hash::structure::HashOut;
+
 
 #[derive(Drop, Debug)]
 pub struct OpeningSet {
@@ -60,9 +63,35 @@ pub struct ProofWithPublicInputs {
     pub public_inputs: Array<Goldilocks>,
 }
 
+#[generate_trait]
+impl ProofWithPublicInputsImpl of ProofWithPublicInputsTrait {
+    fn get_public_inputs_hash(self: @ProofWithPublicInputs) -> HashOut {
+        hash_no_pad(self.public_inputs.span())
+    }
+}
+
 
 #[cfg(test)]
 pub mod tests {
     use plonky2_verifier::plonk::proof::{Proof};
-    use plonky2_verifier::plonk::test_constants::{get_proof};
+    use plonky2_verifier::plonk::test_constants::sample_proof_1;
+    use plonky2_verifier::hash::structure::HashOut;
+    use plonky2_verifier::fields::goldilocks::{gl};
+    use super::{ProofWithPublicInputsImpl};
+
+    #[test]
+    fn test_public_inputs_hash() {
+        let proof = sample_proof_1::get_proof_with_public_inputs();
+        let public_inputs_hash = proof.get_public_inputs_hash();
+        let expected_hash = HashOut {
+            elements: array![
+                gl(8416658900775745054),
+                gl(12574228347150446423),
+                gl(9629056739760131473),
+                gl(3119289788404190010)
+            ]
+                .span()
+        };
+        assert_eq!(public_inputs_hash, expected_hash);
+    }
 }
