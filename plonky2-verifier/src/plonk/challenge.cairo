@@ -24,7 +24,7 @@ pub struct Challenger {
 }
 
 #[generate_trait]
-impl ChallengerImpl of ChallengerTrait {
+pub impl ChallengerImpl of ChallengerTrait {
     fn new() -> Challenger {
         Challenger {
             sponge_state: PoseidonPermutationImpl::default(),

@@ -49,7 +49,7 @@ pub struct FriOpenings {
     pub batches: Array<FriOpeningBatch>
 }
 
-#[derive(Drop)]
+#[derive(Drop, Debug)]
 pub struct FriChallenges {
     // Scaling factor to combine polynomials.
     pub fri_alpha: GoldilocksQuadratic,

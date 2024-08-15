@@ -65,6 +65,13 @@ pub struct CommonCircuitData {
     pub num_lookup_selectors: usize,
 }
 
+#[generate_trait]
+pub impl CommonCircuitDataImpl of CommonCircuitDataTrait {
+    fn degree_bits(self: @CommonCircuitData) -> usize {
+        *self.fri_params.degree_bits
+    }
+}
+
 #[derive(Drop)]
 pub struct VerifierOnlyCircuitData {
     pub constants_sigmas_cap: MerkleCaps,
