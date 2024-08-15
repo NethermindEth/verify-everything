@@ -36,15 +36,15 @@ pub struct FriQueryRound {
 }
 
 #[derive(Drop, Debug)]
-pub struct PolynomialCoeffs {
-    pub coeffs: Array<GoldilocksQuadratic>,
+pub struct PolynomialCoeffs<F> {
+    pub coeffs: Array<F>,
 }
 
 #[derive(Drop, Debug)]
 pub struct FriProof {
     pub commit_phase_merkle_caps: Array<MerkleCaps>,
     pub query_round_proofs: Array<FriQueryRound>,
-    pub final_poly: PolynomialCoeffs,
+    pub final_poly: PolynomialCoeffs<GoldilocksQuadratic>,
     pub pow_witness: Goldilocks,
 }
 

@@ -1,3 +1,5 @@
+use core::traits::TryInto;
+use core::traits::Into;
 use core::box::BoxTrait;
 use core::option::OptionTrait;
 use core::array::SpanTrait;
@@ -9,6 +11,9 @@ use plonky2_verifier::hash::structure::{PoseidonState, HashOut};
 use plonky2_verifier::hash::poseidon::{PoseidonPermutation, PoseidonPermutationImpl};
 use plonky2_verifier::hash::constants::{SPONGE_RATE};
 use plonky2_verifier::hash::merkle_caps::{MerkleCaps};
+use plonky2_verifier::fri::structure::{FriConfig, FriChallenges, FriOpenings};
+use plonky2_verifier::plonk::proof::{PolynomialCoeffs};
+use plonky2_verifier::fields::utils::{shift_left};
 
 
 #[derive(Drop)]
@@ -17,6 +22,7 @@ pub struct Challenger {
     pub input_buffer: Array<Goldilocks>,
     output_buffer: Array<Goldilocks>
 }
+
 #[generate_trait]
 impl ChallengerImpl of ChallengerTrait {
     fn new() -> Challenger {
@@ -45,6 +51,21 @@ impl ChallengerImpl of ChallengerTrait {
         }
     }
 
+    fn observer_extention_element(ref self: Challenger, element: GoldilocksQuadratic) {
+        self.observe_element(element.a);
+        self.observe_element(element.b);
+    }
+
+    fn observe_extension_elements(ref self: Challenger, elements: Span<GoldilocksQuadratic>) {
+        let mut i = 0;
+        let mut len = elements.len();
+        while i < len {
+            self.observer_extention_element(*elements.get(i).unwrap().unbox());
+            i += 1;
+        }
+    }
+
+
     fn observe_hash(ref self: Challenger, hash: HashOut) {
         self.observe_elements(hash.elements);
     }
@@ -54,6 +75,16 @@ impl ChallengerImpl of ChallengerTrait {
         let mut len = merkle_caps.data.len();
         while i < len {
             self.observe_hash(*merkle_caps.data.get(i).unwrap().unbox());
+            i += 1;
+        }
+    }
+
+    fn observe_openings(ref self: Challenger, openings: @FriOpenings) {
+        let mut i = 0;
+        let mut len = openings.batches.len();
+        while i < len {
+            let batch = *openings.batches.get(i).unwrap().unbox();
+            self.observe_extension_elements(batch.values);
             i += 1;
         }
     }
@@ -91,6 +122,50 @@ impl ChallengerImpl of ChallengerTrait {
             i += 1;
         };
         challenges.span()
+    }
+
+    fn fri_challenges(
+        ref self: Challenger,
+        commit_phase_merkle_caps: Span<MerkleCaps>,
+        final_poly: @PolynomialCoeffs<GoldilocksQuadratic>,
+        pow_witness: Goldilocks,
+        degree_bits: usize,
+        config: FriConfig,
+    ) -> FriChallenges {
+        let num_fri_queries = config.num_query_rounds;
+        let lde_size: usize = shift_left(1, (degree_bits + config.rate_bits));
+
+        // Scaling factor to combine polynomials.
+        let fri_alpha = self.get_extension_challenge();
+
+        // Recover the random betas used in the FRI reductions.
+        let mut i = 0;
+        let len = commit_phase_merkle_caps.len();
+        let mut fri_betas = array![];
+        while i < len {
+            self.observe_cap(commit_phase_merkle_caps.get(i).unwrap().unbox().clone());
+            fri_betas.append(self.get_extension_challenge());
+            i += 1;
+        };
+
+        self.observe_extension_elements(final_poly.coeffs.span());
+        self.observe_element(pow_witness);
+        let fri_pow_response = self.get_challenge();
+
+        let mut fri_query_indices: Array<usize> = array![];
+        i = 0;
+        while i < num_fri_queries {
+            let result: u64 = self.get_challenge().inner % lde_size.into();
+            fri_query_indices.append(result.try_into().unwrap());
+            i += 1;
+        };
+
+        FriChallenges {
+            fri_alpha: fri_alpha,
+            fri_betas: fri_betas,
+            fri_pow_response: fri_pow_response,
+            fri_oracle_indices: fri_query_indices
+        }
     }
 
     fn duplexing(ref self: Challenger) {

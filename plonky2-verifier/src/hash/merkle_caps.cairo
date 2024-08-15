@@ -16,7 +16,7 @@ use plonky2_verifier::hash::structure::{HashOut, HashOutImpl};
 
 /// The Merkle cap of height `h` of a Merkle tree is the `h`-th layer (from the root) of the tree.
 /// It can be used in place of the root to verify Merkle paths, which are `h` elements shorter.
-#[derive(Drop, Debug)]
+#[derive(Drop, Clone, Debug)]
 pub struct MerkleCaps {
     pub data: Array<HashOut>
 }
