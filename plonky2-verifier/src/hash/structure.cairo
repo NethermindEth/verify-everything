@@ -27,7 +27,7 @@ pub impl GoldilocksAdd of core::traits::PartialEq<HashOut> {
 }
 
 
-#[derive(Clone, Drop, Debug)]
+#[derive(Copy, Drop, Debug)]
 pub struct PoseidonState {
     pub s0: Goldilocks,
     pub s1: Goldilocks,
