@@ -1,5 +1,7 @@
 use plonky2_verifier::fri::structure::{FriParams, FriConfig};
+use plonky2_verifier::hash::structure::HashOut;
 use plonky2_verifier::fields::goldilocks::Goldilocks;
+use plonky2_verifier::hash::merkle_caps::MerkleCaps;
 
 #[derive(Drop)]
 pub struct CircuitConfig {
@@ -61,4 +63,10 @@ pub struct CommonCircuitData {
     pub num_partial_products: usize,
     pub num_lookup_polys: usize,
     pub num_lookup_selectors: usize,
+}
+
+#[derive(Drop)]
+pub struct VerifierOnlyCircuitData {
+    pub constants_sigmas_cap: MerkleCaps,
+    pub circuit_digest: HashOut,
 }

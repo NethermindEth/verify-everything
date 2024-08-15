@@ -1,3 +1,3 @@
 pub mod proof;
 pub mod constants;
-pub mod commons;
+pub mod circuit_data;

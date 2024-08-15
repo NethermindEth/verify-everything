@@ -177,7 +177,7 @@ impl MerkleTreeImpl of MerkleTreeTrait {
 }
 #[cfg(test)]
 mod tests {
-    use plonky2_verifier::merkle::merkle_caps::MerkleCapsTrait;
+    use plonky2_verifier::hash::merkle_caps::MerkleCapsTrait;
     use core::traits::Into;
     use super::{gl, HashOut, MerkleTreeImpl, MerkleCapsImpl, MerkleTree, HashOutImpl};
 

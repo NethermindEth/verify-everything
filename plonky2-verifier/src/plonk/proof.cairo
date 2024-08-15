@@ -1,4 +1,4 @@
-use plonky2_verifier::merkle::merkle_caps::{MerkleCaps, MerkleProof};
+use plonky2_verifier::hash::merkle_caps::{MerkleCaps, MerkleProof};
 use plonky2_verifier::fields::goldilocks_quadratic::GoldilocksQuadratic;
 use plonky2_verifier::fields::goldilocks::Goldilocks;
 use plonky2_verifier::hash::poseidon::hash_no_pad;
@@ -96,7 +96,8 @@ pub mod tests {
     }
 
     #[test]
-    fn should_load_common_circuit_data() {
-        let common_data = sample_proof_1::get_common_data();
+    fn should_load_circuit_data() {
+        let _common_data = sample_proof_1::get_common_data();
+        let _verifier_only_data = sample_proof_1::get_verifier_only_data();
     }
 }

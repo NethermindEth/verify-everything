@@ -1,5 +1,5 @@
 pub mod sample_proof_1 {
-    use plonky2_verifier::merkle::merkle_caps::{MerkleCaps, MerkleProof};
+    use plonky2_verifier::hash::merkle_caps::{MerkleCaps, MerkleProof};
     use plonky2_verifier::hash::structure::{HashOut, HashOutImpl};
     use plonky2_verifier::fields::goldilocks::{Goldilocks, gl};
     use plonky2_verifier::fields::goldilocks_quadratic::{GoldilocksQuadratic, glq};
@@ -8,7 +8,9 @@ pub mod sample_proof_1 {
         FriQueryRound, PolynomialCoeffs
     };
 
-    use plonky2_verifier::plonk::commons::{Range, CircuitConfig, SelectorsInfo, CommonCircuitData};
+    use plonky2_verifier::plonk::circuit_data::{
+        Range, VerifierOnlyCircuitData, CircuitConfig, SelectorsInfo, CommonCircuitData
+    };
     use plonky2_verifier::fri::structure::{FriConfig, FriParams, FriReductionStrategy};
 
     pub fn get_common_data() -> CommonCircuitData {
@@ -128,6 +130,168 @@ pub mod sample_proof_1 {
             num_partial_products: 9,
             num_lookup_polys: 0,
             num_lookup_selectors: 0,
+        }
+    }
+
+    pub fn get_verifier_only_data() -> VerifierOnlyCircuitData {
+        VerifierOnlyCircuitData {
+            constants_sigmas_cap: MerkleCaps {
+                data: array![
+                    HashOut {
+                        elements: array![
+                            Goldilocks { inner: 5604217990519828812 },
+                            Goldilocks { inner: 2718143589872620994 },
+                            Goldilocks { inner: 7795633798905581400 },
+                            Goldilocks { inner: 14187045079733473889 },
+                        ]
+                            .span()
+                    },
+                    HashOut {
+                        elements: array![
+                            Goldilocks { inner: 6153039260631433383 },
+                            Goldilocks { inner: 18172132923977255622 },
+                            Goldilocks { inner: 9800107892645938515 },
+                            Goldilocks { inner: 11043585824951649204 },
+                        ]
+                            .span()
+                    },
+                    HashOut {
+                        elements: array![
+                            Goldilocks { inner: 18265033459063299369 },
+                            Goldilocks { inner: 1120811203720793016 },
+                            Goldilocks { inner: 6413205463195974668 },
+                            Goldilocks { inner: 8295804708219373641 },
+                        ]
+                            .span()
+                    },
+                    HashOut {
+                        elements: array![
+                            Goldilocks { inner: 4273397014551721348 },
+                            Goldilocks { inner: 12074867195856212362 },
+                            Goldilocks { inner: 4227859197774066516 },
+                            Goldilocks { inner: 7622048892515243426 },
+                        ]
+                            .span()
+                    },
+                    HashOut {
+                        elements: array![
+                            Goldilocks { inner: 7348844050703704862 },
+                            Goldilocks { inner: 16057562160967239467 },
+                            Goldilocks { inner: 14537425347967515410 },
+                            Goldilocks { inner: 7327510616248954511 },
+                        ]
+                            .span()
+                    },
+                    HashOut {
+                        elements: array![
+                            Goldilocks { inner: 15482291839674449581 },
+                            Goldilocks { inner: 3869329904220345417 },
+                            Goldilocks { inner: 17206123630660086834 },
+                            Goldilocks { inner: 12011472028830792623 },
+                        ]
+                            .span()
+                    },
+                    HashOut {
+                        elements: array![
+                            Goldilocks { inner: 1979576868493316380 },
+                            Goldilocks { inner: 5490996031350540179 },
+                            Goldilocks { inner: 17148485610059226402 },
+                            Goldilocks { inner: 1174132420890621587 },
+                        ]
+                            .span()
+                    },
+                    HashOut {
+                        elements: array![
+                            Goldilocks { inner: 11436895985559652971 },
+                            Goldilocks { inner: 3697616247144792641 },
+                            Goldilocks { inner: 6598497848369893431 },
+                            Goldilocks { inner: 18301221487167524723 },
+                        ]
+                            .span()
+                    },
+                    HashOut {
+                        elements: array![
+                            Goldilocks { inner: 18089274893278053309 },
+                            Goldilocks { inner: 734229703686096228 },
+                            Goldilocks { inner: 10995240378499922464 },
+                            Goldilocks { inner: 11259019806037349356 },
+                        ]
+                            .span()
+                    },
+                    HashOut {
+                        elements: array![
+                            Goldilocks { inner: 659449113564866180 },
+                            Goldilocks { inner: 1069416199171620413 },
+                            Goldilocks { inner: 2228057311148970998 },
+                            Goldilocks { inner: 18294706236919389259 },
+                        ]
+                            .span()
+                    },
+                    HashOut {
+                        elements: array![
+                            Goldilocks { inner: 14080884394499924945 },
+                            Goldilocks { inner: 15680289659489287288 },
+                            Goldilocks { inner: 18383934043541384050 },
+                            Goldilocks { inner: 10863873819166780655 },
+                        ]
+                            .span()
+                    },
+                    HashOut {
+                        elements: array![
+                            Goldilocks { inner: 3589560232102080318 },
+                            Goldilocks { inner: 1044867015210233641 },
+                            Goldilocks { inner: 15591652403864172620 },
+                            Goldilocks { inner: 4590856430022800152 },
+                        ]
+                            .span()
+                    },
+                    HashOut {
+                        elements: array![
+                            Goldilocks { inner: 12820552931602797642 },
+                            Goldilocks { inner: 8604379898784136759 },
+                            Goldilocks { inner: 14019927878366389555 },
+                            Goldilocks { inner: 5632015115615350443 },
+                        ]
+                            .span()
+                    },
+                    HashOut {
+                        elements: array![
+                            Goldilocks { inner: 9167279250738645969 },
+                            Goldilocks { inner: 12764180424424748131 },
+                            Goldilocks { inner: 9356271265480590548 },
+                            Goldilocks { inner: 13217269556137535715 },
+                        ]
+                            .span()
+                    },
+                    HashOut {
+                        elements: array![
+                            Goldilocks { inner: 15356415125555595797 },
+                            Goldilocks { inner: 12439854685481663368 },
+                            Goldilocks { inner: 1162768494951591093 },
+                            Goldilocks { inner: 11473163470184291083 },
+                        ]
+                            .span()
+                    },
+                    HashOut {
+                        elements: array![
+                            Goldilocks { inner: 197797915066939120 },
+                            Goldilocks { inner: 10674371637479582352 },
+                            Goldilocks { inner: 13102626241659049416 },
+                            Goldilocks { inner: 8771537937490550412 },
+                        ]
+                            .span()
+                    },
+                ]
+            },
+            circuit_digest: HashOut {
+                elements: array![
+                    gl(680314712078372819),
+                    gl(14153136010894205371),
+                    gl(2129863232157314120),
+                    gl(13197727152395998483)
+                ]
+                    .span()
+            }
         }
     }
 

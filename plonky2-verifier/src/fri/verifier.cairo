@@ -3,7 +3,7 @@ use plonky2_verifier::fri::structure::{
     FriInstanceInfo, FriOpenings, FriChallenges, FriOracleInfo, FriPolynomialInfo, FriBatchInfo,
     FriReductionStrategy, FriConfig, FriParams
 };
-use plonky2_verifier::merkle::merkle_caps::{MerkleCaps, MerkleProof};
+use plonky2_verifier::hash::merkle_caps::{MerkleCaps, MerkleProof};
 use plonky2_verifier::plonk::proof::{FriProof};
 
 pub fn verify_fri_proof(
