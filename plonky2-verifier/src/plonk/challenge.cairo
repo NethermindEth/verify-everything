@@ -4,9 +4,12 @@ use core::array::SpanTrait;
 use plonky2_verifier::hash::poseidon::PoseidonPermutationTrait;
 use core::array::ArrayTrait;
 use plonky2_verifier::fields::goldilocks::{Goldilocks, gl};
-use plonky2_verifier::hash::structure::{PoseidonState};
+use plonky2_verifier::fields::goldilocks_quadratic::{GoldilocksQuadratic};
+use plonky2_verifier::hash::structure::{PoseidonState, HashOut};
 use plonky2_verifier::hash::poseidon::{PoseidonPermutation, PoseidonPermutationImpl};
 use plonky2_verifier::hash::constants::{SPONGE_RATE};
+use plonky2_verifier::hash::merkle_caps::{MerkleCaps};
+
 
 #[derive(Drop)]
 pub struct Challenger {
@@ -31,6 +34,63 @@ impl ChallengerImpl of ChallengerTrait {
         if self.input_buffer.len() == SPONGE_RATE {
             self.duplexing();
         }
+    }
+
+    fn observe_elements(ref self: Challenger, elements: Span<Goldilocks>) {
+        let mut i = 0;
+        let mut len = elements.len();
+        while i < len {
+            self.observe_element(*elements.get(i).unwrap().unbox());
+            i += 1;
+        }
+    }
+
+    fn observe_hash(ref self: Challenger, hash: HashOut) {
+        self.observe_elements(hash.elements);
+    }
+
+    fn observe_cap(ref self: Challenger, merkle_caps: MerkleCaps) {
+        let mut i = 0;
+        let mut len = merkle_caps.data.len();
+        while i < len {
+            self.observe_hash(*merkle_caps.data.get(i).unwrap().unbox());
+            i += 1;
+        }
+    }
+
+    fn get_challenge(ref self: Challenger) -> Goldilocks {
+        if !self.input_buffer.is_empty() || self.output_buffer.is_empty() {
+            self.duplexing();
+        }
+        self.output_buffer.pop_front().unwrap()
+    }
+
+    fn get_n_challenges(ref self: Challenger, n: usize) -> Span<Goldilocks> {
+        let mut challenges = array![];
+        let mut i = 0;
+        while i < n {
+            challenges.append(self.get_challenge());
+            i += 1;
+        };
+        challenges.span()
+    }
+
+    fn get_hash(ref self: Challenger) -> HashOut {
+        HashOut { elements: self.get_n_challenges(4) }
+    }
+
+    fn get_extension_challenge(ref self: Challenger) -> GoldilocksQuadratic {
+        GoldilocksQuadratic { a: self.get_challenge(), b: self.get_challenge() }
+    }
+
+    fn get_n_extention_challenges(ref self: Challenger, n: usize) -> Span<GoldilocksQuadratic> {
+        let mut challenges = array![];
+        let mut i = 0;
+        while i < n {
+            challenges.append(self.get_extension_challenge());
+            i += 1;
+        };
+        challenges.span()
     }
 
     fn duplexing(ref self: Challenger) {
