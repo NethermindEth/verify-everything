@@ -8,6 +8,129 @@ pub mod sample_proof_1 {
         FriQueryRound, PolynomialCoeffs
     };
 
+    use plonky2_verifier::plonk::commons::{Range, CircuitConfig, SelectorsInfo, CommonCircuitData};
+    use plonky2_verifier::fri::structure::{FriConfig, FriParams, FriReductionStrategy};
+
+    pub fn get_common_data() -> CommonCircuitData {
+        let fri_config = FriConfig {
+            rate_bits: 3,
+            cap_height: 4,
+            proof_of_work_bits: 16,
+            reduction_strategy: FriReductionStrategy::ConstantArityBits((4, 5)),
+            num_query_rounds: 28
+        };
+
+        CommonCircuitData {
+            config: CircuitConfig {
+                num_wires: 135,
+                num_routed_wires: 80,
+                num_constants: 2,
+                use_base_arithmetic_gate: true,
+                security_bits: 100,
+                num_challenges: 2,
+                zero_knowledge: false,
+                max_quotient_degree_factor: 8,
+                fri_config: fri_config.clone()
+            },
+            fri_params: FriParams {
+                config: fri_config, hiding: false, degree_bits: 3, reduction_arity_bits: array![]
+            },
+            selectors_info: SelectorsInfo {
+                selector_indices: array![0, 0, 0, 1],
+                groups: array![Range { start: 0, end: 3 }, Range { start: 3, end: 4 }]
+            },
+            quotient_degree_factor: 8,
+            num_gate_constraints: 123,
+            num_constants: 4,
+            num_public_inputs: 3,
+            k_is: array![
+                gl(1),
+                gl(14293326489335486720),
+                gl(4700049436776250445),
+                gl(3541557213422017946),
+                gl(18196947516708736925),
+                gl(15817657382918473249),
+                gl(13907817722130613464),
+                gl(10952810625341944941),
+                gl(6203009912824666656),
+                gl(3300053643433736875),
+                gl(6744005316595460895),
+                gl(15739729861593455007),
+                gl(261242591546957104),
+                gl(15971894691377196519),
+                gl(16201670926897260089),
+                gl(8415742645426514154),
+                gl(11796957557555108937),
+                gl(16294407261451109534),
+                gl(5598800393413128961),
+                gl(15563455834725815206),
+                gl(1764867128134410509),
+                gl(7162174829468034425),
+                gl(3755871071604584538),
+                gl(4342271783305288164),
+                gl(12880969007487790240),
+                gl(10677306222450711949),
+                gl(6504175050764636243),
+                gl(5111390403385516632),
+                gl(13022173847108028602),
+                gl(13993386182188331211),
+                gl(17852688572278391749),
+                gl(13748656795736045903),
+                gl(1633629184600895140),
+                gl(4529011729897082393),
+                gl(4906629816328734350),
+                gl(12354457273844909068),
+                gl(11030994060168315240),
+                gl(5132927100884704451),
+                gl(1903334112240650810),
+                gl(11300350282455140548),
+                gl(12947495166068534688),
+                gl(7280050037032595918),
+                gl(2325750220496619057),
+                gl(9863469300860708700),
+                gl(5927058137232203163),
+                gl(18296775548535963806),
+                gl(16027760200278862284),
+                gl(3198226309374699824),
+                gl(17159143107915980371),
+                gl(4742102661775960192),
+                gl(5942453867077433164),
+                gl(12359909013026785218),
+                gl(12296487080408661428),
+                gl(14401603032726340600),
+                gl(18340875264408803468),
+                gl(8906999085452790476),
+                gl(11753455510941625388),
+                gl(3159781736502437645),
+                gl(3690235712498808163),
+                gl(16869124931580068791),
+                gl(7948505852798141842),
+                gl(4267625380418386787),
+                gl(10384476522904372165),
+                gl(8329181427250703158),
+                gl(4330207543506945610),
+                gl(833510845038654548),
+                gl(8836109905071273552),
+                gl(17461172238536664200),
+                gl(7507668114706621706),
+                gl(10436382014321953781),
+                gl(8399564173061725609),
+                gl(5202025295353182265),
+                gl(7131181789704110196),
+                gl(2721005760266608278),
+                gl(16098153662796521606),
+                gl(2994147549514928958),
+                gl(2352027076596130080),
+                gl(11017795050405368910),
+                gl(10381049954328279003),
+                gl(3834749477258943827)
+            ],
+            num_partial_products: 9,
+            num_lookup_polys: 0,
+            num_lookup_selectors: 0,
+        }
+    }
+
     pub fn get_wires_cap() -> MerkleCaps {
         MerkleCaps {
             data: array![

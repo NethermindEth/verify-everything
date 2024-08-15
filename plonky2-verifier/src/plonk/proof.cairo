@@ -74,7 +74,7 @@ impl ProofWithPublicInputsImpl of ProofWithPublicInputsTrait {
 #[cfg(test)]
 pub mod tests {
     use plonky2_verifier::plonk::proof::{Proof};
-    use plonky2_verifier::plonk::test_constants::sample_proof_1;
+    use plonky2_verifier::plonk::constants::sample_proof_1;
     use plonky2_verifier::hash::structure::HashOut;
     use plonky2_verifier::fields::goldilocks::{gl};
     use super::{ProofWithPublicInputsImpl};
@@ -93,5 +93,10 @@ pub mod tests {
                 .span()
         };
         assert_eq!(public_inputs_hash, expected_hash);
+    }
+
+    #[test]
+    fn should_load_common_circuit_data() {
+        let common_data = sample_proof_1::get_common_data();
     }
 }
