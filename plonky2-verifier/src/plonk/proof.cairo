@@ -78,7 +78,7 @@ pub struct Proof {
     pub opening_proof: FriProof
 }
 
-#[derive(Drop, Debug)]
+#[derive(Drop, Debug, PartialEq)]
 pub struct ProofChallenges {
     pub plonk_betas: Span<Goldilocks>,
     pub plonk_gammas: Span<Goldilocks>,
@@ -117,21 +117,28 @@ pub impl ProofWithPublicInputsImpl of ProofWithPublicInputsTrait {
 
         let config = common_data.config;
         let num_challenges = *config.num_challenges;
+
+        println!("num_challenges: {:?}", num_challenges);
+
         let mut challenger = ChallengerImpl::new();
 
         // observer the instance
-        challenger.observe_hash(circuit_digest.clone());
-        challenger.observe_hash(public_inputs_hash.clone());
-        challenger.observe_cap(wires_cap.clone());
+        challenger.observe_hash(circuit_digest);
+        challenger.observe_hash(public_inputs_hash);
+        challenger.observe_cap(wires_cap);
+        println!("input buffer: {:?}", challenger.input_buffer);
 
         let plonk_betas = challenger.get_n_challenges(num_challenges);
+
+        println!("plonk betas, {:?}", plonk_betas);
+
         let plonk_gammas = challenger.get_n_challenges(num_challenges);
         let plonk_deltas = array![].span(); // todo: consider lookups
 
-        challenger.observe_cap(plonk_zs_partial_products_cap.clone());
+        challenger.observe_cap(plonk_zs_partial_products_cap);
         let plonk_alphas = challenger.get_n_challenges(num_challenges);
 
-        challenger.observe_cap(quotient_polys_cap.clone());
+        challenger.observe_cap(quotient_polys_cap);
         let plonk_zeta = challenger.get_extension_challenge();
 
         challenger.observe_openings(@openings.to_fri_openings());

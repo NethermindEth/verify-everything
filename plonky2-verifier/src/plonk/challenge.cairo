@@ -66,15 +66,15 @@ pub impl ChallengerImpl of ChallengerTrait {
     }
 
 
-    fn observe_hash(ref self: Challenger, hash: HashOut) {
-        self.observe_elements(hash.elements);
+    fn observe_hash(ref self: Challenger, hash: @HashOut) {
+        self.observe_elements(*hash.elements);
     }
 
-    fn observe_cap(ref self: Challenger, merkle_caps: MerkleCaps) {
+    fn observe_cap(ref self: Challenger, merkle_caps: @MerkleCaps) {
         let mut i = 0;
         let mut len = merkle_caps.data.len();
         while i < len {
-            self.observe_hash(*merkle_caps.data.get(i).unwrap().unbox());
+            self.observe_hash(merkle_caps.data.get(i).unwrap().unbox());
             i += 1;
         }
     }
@@ -89,11 +89,26 @@ pub impl ChallengerImpl of ChallengerTrait {
         }
     }
 
+    fn pop_output_buffer(ref self: Challenger) -> Goldilocks {
+        let len = self.output_buffer.len();
+        let top = self.output_buffer.get(len - 1).unwrap().unbox();
+        let mut new_data = array![];
+        let mut i = 0;
+        let mut len = len - 1;
+        while i < len {
+            new_data.append(*self.output_buffer.get(i).unwrap().unbox());
+            i += 1;
+        };
+        self.output_buffer = new_data;
+        *top
+    }
+
     fn get_challenge(ref self: Challenger) -> Goldilocks {
         if !self.input_buffer.is_empty() || self.output_buffer.is_empty() {
             self.duplexing();
         }
-        self.output_buffer.pop_front().unwrap()
+
+        self.pop_output_buffer()
     }
 
     fn get_n_challenges(ref self: Challenger, n: usize) -> Span<Goldilocks> {
@@ -143,7 +158,7 @@ pub impl ChallengerImpl of ChallengerTrait {
         let len = commit_phase_merkle_caps.len();
         let mut fri_betas = array![];
         while i < len {
-            self.observe_cap(commit_phase_merkle_caps.get(i).unwrap().unbox().clone());
+            self.observe_cap(@commit_phase_merkle_caps.get(i).unwrap().unbox().clone());
             fri_betas.append(self.get_extension_challenge());
             i += 1;
         };
