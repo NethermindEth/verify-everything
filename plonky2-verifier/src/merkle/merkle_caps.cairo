@@ -11,7 +11,7 @@ use plonky2_verifier::fields::goldilocks::GoldilocksTrait;
 use plonky2_verifier::fields::goldilocks::{Goldilocks, gl};
 use plonky2_verifier::fields::utils::{log2_strict};
 use plonky2_verifier::hash::poseidon::{hash_two_to_one};
-use plonky2_verifier::hash::poseidon_state::{HashOut, HashOutImpl};
+use plonky2_verifier::hash::structure::{HashOut, HashOutImpl};
 
 
 /// The Merkle cap of height `h` of a Merkle tree is the `h`-th layer (from the root) of the tree.
