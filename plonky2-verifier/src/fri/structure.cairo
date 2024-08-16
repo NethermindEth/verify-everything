@@ -57,7 +57,7 @@ pub struct FriChallenges {
     pub fri_betas: Array<GoldilocksQuadratic>,
     pub fri_pow_response: Goldilocks,
     // Indices at which the oracle is queried in FRI.
-    pub fri_oracle_indices: Array<usize>,
+    pub fri_query_indices: Array<usize>,
 }
 
 #[derive(Drop, Clone)]
@@ -157,7 +157,7 @@ pub struct PrecomputedReducedOpenings {
 }
 
 #[generate_trait]
-impl PrecomputedReducedOpeningsImpl of PrecomputedReducedOpeningsTrait {
+pub impl PrecomputedReducedOpeningsImpl of PrecomputedReducedOpeningsTrait {
     fn from_os_and_alpha(
         openings: @FriOpenings, alpha: @GoldilocksQuadratic
     ) -> PrecomputedReducedOpenings {

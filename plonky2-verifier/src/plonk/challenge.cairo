@@ -179,7 +179,7 @@ pub impl ChallengerImpl of ChallengerTrait {
             fri_alpha: fri_alpha,
             fri_betas: fri_betas,
             fri_pow_response: fri_pow_response,
-            fri_oracle_indices: fri_query_indices
+            fri_query_indices: fri_query_indices
         }
     }
 

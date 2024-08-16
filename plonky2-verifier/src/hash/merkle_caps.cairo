@@ -27,7 +27,7 @@ pub struct MerkleProof {
 }
 
 #[generate_trait]
-impl MerkleCapsImpl of MerkleCapsTrait {
+pub impl MerkleCapsImpl of MerkleCapsTrait {
     fn default() -> MerkleCaps {
         MerkleCaps { data: array![] }
     }

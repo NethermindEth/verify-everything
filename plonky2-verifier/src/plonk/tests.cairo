@@ -71,7 +71,7 @@ pub mod tests {
                 },
                 fri_betas: array![],
                 fri_pow_response: Goldilocks { inner: 161874801050727 },
-                fri_oracle_indices: array![
+                fri_query_indices: array![
                     4,
                     37,
                     11,
