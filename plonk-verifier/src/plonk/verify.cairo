@@ -10,17 +10,18 @@ use core::cmp::max;
 
 use plonk_verifier::traits::FieldShortcuts;
 use plonk_verifier::traits::FieldOps;
+use plonk_verifier::traits::FieldUtils;
 use plonk_verifier::traits::FieldMulShortcuts;
 use plonk_verifier::plonk::transcript::Keccak256Transcript;
 use plonk_verifier::curve::groups::{g1, g2, AffineG1, AffineG2, AffineG2Impl};
 use plonk_verifier::curve::groups::ECOperations;
-use plonk_verifier::fields::{fq, Fq, Fq12};
-use plonk_verifier::curve::constants::{ORDER, ORDER_NZ};
+use plonk_verifier::fields::{fq, Fq, Fq12, Fq12Exponentiation, Fq12Utils};
+use plonk_verifier::curve::constants::{ORDER, ORDER_NZ, get_field_nz};
 use plonk_verifier::plonk::types::{PlonkProof, PlonkVerificationKey, PlonkChallenge};
 use plonk_verifier::plonk::transcript::{Transcript, TranscriptElement};
 use plonk_verifier::curve::{u512, neg_o, sqr_nz, mul, mul_u, mul_nz, div_nz, add_nz, sub_u, sub};
 use plonk_verifier::pairing::tate_bkls::{tate_pairing, tate_miller_loop};
-
+use plonk_verifier::pairing::optimal_ate::{single_ate_pairing, ate_miller_loop};
 #[generate_trait]
 impl PlonkVerifier of PVerifier {
     fn verify(
@@ -399,26 +400,12 @@ impl PlonkVerifier of PVerifier {
         B1 = B1.add(E.neg());
 
         let g2_one = AffineG2Impl::one();
-        println!("A1.neg() x: {:?}", A1.neg().x.c0);
-        println!("A1.neg() y: {:?}", A1.neg().y.c0);
-        println!("B1 x: {:?}", B1.x.c0);
-        println!("B1 y: {:?}", B1.y.c0);
 
-        println!("v2_x2_x: {:?}", vk.X_2.x.c0);
-        println!("v2_x2_x: {:?}", vk.X_2.x.c1);
-        println!("v2_x2_y: {:?}", vk.X_2.y.c0);
-        println!("v2_x2_y: {:?}", vk.X_2.y.c1);
+        let e_A1_vk_x2 = single_ate_pairing(A1, vk.X_2);
+        let e_B1_g2_1 = single_ate_pairing(B1, g2_one);
 
-        println!("g2_one_x1: {:?}", g2_one.x.c0);
-        println!("g2_one_x2: {:?}", g2_one.x.c1);
-        println!("g2_one_y1: {:?}", g2_one.y.c0);
-        println!("g2_one_y2: {:?}", g2_one.y.c1);
+        let res: bool = e_A1_vk_x2.c0 == e_B1_g2_1.c0;
 
-        let e_A1_vk_x2 = tate_miller_loop(A1.neg(), vk.X_2);
-        let e_B1_g2_1 = tate_miller_loop(B1, g2_one);
-        println!("e_A1_vk_x2: {:?}", e_A1_vk_x2);
-        println!("e_B1_g2_1: {:?}", e_B1_g2_1);
-        let res = e_A1_vk_x2 == e_B1_g2_1;
         res
     }
 }
