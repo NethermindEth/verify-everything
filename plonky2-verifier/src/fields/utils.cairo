@@ -61,13 +61,18 @@ pub fn min_array<
     min
 }
 
-pub fn pow<T, impl TCopy: Copy<T>, impl TDrop: Drop<T>, impl TMul: Mul<T>>(base: T, exp: u32) -> T {
+pub fn pow<
+    T, impl TCopy: Copy<T>, impl TDrop: Drop<T>, impl TMul: Mul<T>, impl TDebug: core::fmt::Debug<T>
+>(
+    base: T, exp: u64
+) -> T {
     // iterative squaring
     let mut result = base;
     let mut exp = exp;
     while exp > 1 {
         if exp % 2 == 0 {
             result = result * result;
+            println!("result: {:?}", result);
             exp = exp / 2;
         } else {
             result = result * base;
@@ -78,11 +83,11 @@ pub fn pow<T, impl TCopy: Copy<T>, impl TDrop: Drop<T>, impl TMul: Mul<T>>(base:
 }
 
 pub fn shift_left(x: usize, shift: u32) -> usize {
-    x * pow(2, shift)
+    x * pow::<usize>(2, shift.into())
 }
 
 pub fn shift_right(x: usize, shift: u32) -> usize {
-    x / pow(2, shift)
+    x / pow::<usize>(2, shift.into())
 }
 
 /// helper function to calculate the log base 2 of a number

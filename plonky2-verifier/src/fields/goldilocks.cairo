@@ -2,6 +2,8 @@ use core::option::OptionTrait;
 use core::result::ResultTrait;
 use core::traits::TryInto;
 use core::integer::U128MulGuarantee;
+use plonky2_verifier::fields::field::F;
+use plonky2_verifier::fields::utils::pow;
 
 pub extern fn u256_safe_divmod(
     lhs: u256, rhs: NonZero<u256>
@@ -92,6 +94,55 @@ pub impl GoldilocksNeg of Neg<Goldilocks> {
         } else {
             Goldilocks { inner: P - a.inner }
         }
+    }
+}
+
+
+pub impl GoldilocksField of F<Goldilocks> {
+    fn TWO_ADICITY() -> usize {
+        32
+    }
+    fn CHARACTERISTIC_TWO_ADICITY() -> usize {
+        32
+    }
+    fn MULTIPLICATIVE_GROUP_GENERATOR() -> Goldilocks {
+        Goldilocks { inner: 14293326489335486720 }
+    }
+
+    fn POWER_OF_TWO_GENERATOR() -> Goldilocks {
+        Goldilocks { inner: 7277203076849721926 }
+    }
+
+    fn exp_power_of_2(self: @Goldilocks, power_log: usize) -> Goldilocks {
+        let mut res = *self;
+        let mut i = 0;
+        while i < power_log {
+            res = res * res;
+            i += 1;
+        };
+        res
+    }
+
+    fn exp_u64(self: @Goldilocks, exp: u64) -> Goldilocks {
+        let mut res = Goldilocks { inner: 1 };
+        let mut exp = exp;
+        let mut base = *self;
+        while exp > 1 {
+            if exp % 2 == 0 {
+                base = base * base;
+                exp = exp / 2;
+            } else {
+                res = res * base;
+                exp = exp - 1;
+            }
+        };
+        res * base
+    }
+
+    fn primitive_root_of_unity(n_log: usize) -> Goldilocks {
+        assert!(n_log <= GoldilocksField::TWO_ADICITY());
+        let base = GoldilocksField::POWER_OF_TWO_GENERATOR();
+        base.exp_power_of_2(GoldilocksField::TWO_ADICITY() - n_log)
     }
 }
 
