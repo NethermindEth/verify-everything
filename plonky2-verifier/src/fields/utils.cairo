@@ -72,7 +72,6 @@ pub fn pow<
     while exp > 1 {
         if exp % 2 == 0 {
             result = result * result;
-            println!("result: {:?}", result);
             exp = exp / 2;
         } else {
             result = result * base;
