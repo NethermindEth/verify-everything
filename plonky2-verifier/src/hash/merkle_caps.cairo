@@ -12,7 +12,7 @@ use plonky2_verifier::fields::goldilocks::{Goldilocks, gl};
 use plonky2_verifier::fields::utils::{log2_strict};
 use plonky2_verifier::hash::poseidon::{hash_two_to_one};
 use plonky2_verifier::hash::structure::{HashOut, HashOutImpl};
-
+use plonky2_verifier::hash::poseidon::{hash_no_pad};
 
 /// The Merkle cap of height `h` of a Merkle tree is the `h`-th layer (from the root) of the tree.
 /// It can be used in place of the root to verify Merkle paths, which are `h` elements shorter.
@@ -44,24 +44,27 @@ pub impl MerkleCapsImpl of MerkleCapsTrait {
         log2_strict(self.len())
     }
 
-
     fn verify(self: @MerkleCaps, index: usize, leaf: HashOut, proof: @MerkleProof,) -> bool {
         let mut node = leaf;
+
+        if leaf.elements.len() > 4 {
+            node = hash_no_pad(leaf.elements)
+        }
+
         let mut index = index;
 
         let mut i = 0;
-        while i < proof
-            .siblings
-            .len() {
-                let sibling = *proof.siblings.get(i).unwrap().unbox();
-                if index % 2 == 0 {
-                    node = hash_two_to_one(node, sibling);
-                } else {
-                    node = hash_two_to_one(sibling, node);
-                }
-                index /= 2;
-                i += 1;
-            };
+        let len = proof.siblings.len();
+        while i < len {
+            let sibling = *proof.siblings.get(i).unwrap().unbox();
+            if index % 2 == 0 {
+                node = hash_two_to_one(node, sibling);
+            } else {
+                node = hash_two_to_one(sibling, node);
+            }
+            index /= 2;
+            i += 1;
+        };
 
         node == *self.data[index]
     }
