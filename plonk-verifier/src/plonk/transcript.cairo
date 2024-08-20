@@ -7,13 +7,13 @@ use core::byte_array::ByteArrayTrait;
 use core::to_byte_array::{FormatAsByteArray, AppendFormattedToByteArray};
 use core::fmt::{Display, Formatter, Error};
 use debug::PrintTrait;
-use plonk_verifier::curve::constants::{ORDER};
 
+use plonk_verifier::curve::constants::{ORDER, get_order_nz};
 use plonk_verifier::curve::groups::{g1, g2, AffineG1, AffineG2};
 use plonk_verifier::fields::{fq, Fq, FqIntoU256};
 use plonk_verifier::traits::FieldMulShortcuts;
 use plonk_verifier::plonk::utils::{convert_le_to_be, hex_to_decimal, decimal_to_byte_array};
-
+use plonk_verifier::curve::{mul_nz};
 
 #[derive(Drop)]
 pub struct PlonkTranscript {
@@ -76,9 +76,11 @@ impl Transcript of Keccak256Transcript<PlonkTranscript> {
         };
 
         let le_value = keccak::compute_keccak_byte_array(@buffer);
+
         let be_value = convert_le_to_be(le_value);
         let be_u256: u256 = hex_to_decimal(be_value);
+        let challenge: Fq = fq(mul_nz(be_u256, 1, get_order_nz()));
 
-        fq(be_u256 % ORDER)
+        challenge
     }
 }
