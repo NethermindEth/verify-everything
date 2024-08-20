@@ -43,7 +43,7 @@ struct PlonkVerificationKey {
     w: u256
 }
 
-#[derive(Drop, Copy)]
+#[derive(Debug, Drop, Copy)]
 struct PlonkChallenge {
     beta: Fq,
     gamma: Fq,
@@ -57,4 +57,21 @@ struct PlonkChallenge {
     v4: Fq,
     v5: Fq,
     u: Fq
+}
+
+impl PlonkChallengePartialEq of PartialEq<PlonkChallenge> {
+    fn eq(lhs: @PlonkChallenge, rhs: @PlonkChallenge) -> bool {
+        lhs.beta == rhs.beta
+            && lhs.gamma == rhs.gamma
+            && lhs.alpha == rhs.alpha
+            && lhs.xi == rhs.xi
+            && lhs.xin == rhs.xin
+            && lhs.zh == rhs.zh
+            && lhs.v1 == rhs.v1
+            && lhs.v2 == rhs.v2
+            && lhs.v3 == rhs.v3
+            && lhs.v4 == rhs.v4
+            && lhs.v5 == rhs.v5
+            && lhs.u == rhs.u
+    }
 }

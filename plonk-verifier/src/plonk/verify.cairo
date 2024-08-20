@@ -22,6 +22,7 @@ use plonk_verifier::plonk::transcript::{Transcript, TranscriptElement};
 use plonk_verifier::curve::{u512, neg_o, sqr_nz, mul, mul_u, mul_nz, div_nz, add_nz, sub_u, sub};
 use plonk_verifier::pairing::tate_bkls::{tate_pairing, tate_miller_loop};
 use plonk_verifier::pairing::optimal_ate::{single_ate_pairing, ate_miller_loop};
+
 #[generate_trait]
 impl PlonkVerifier of PVerifier {
     fn verify(
@@ -49,23 +50,19 @@ impl PlonkVerifier of PVerifier {
 
         result = result
             && Self::check_public_inputs_length(
-                verification_key.nPublic.clone(), publicSignals.len().into()
+                verification_key.nPublic, publicSignals.len().into()
             );
         let mut challenges: PlonkChallenge = Self::compute_challenges(
-            verification_key.clone(), proof.clone(), publicSignals.clone()
+            verification_key, proof, publicSignals.clone()
         );
 
-        let (L, challenges) = Self::compute_lagrange_evaluations(
-            verification_key.clone(), challenges
-        );
+        let (L, challenges) = Self::compute_lagrange_evaluations(verification_key, challenges);
 
-        let mut PI = Self::compute_PI(publicSignals.clone(), L.clone());
+        let PI = Self::compute_PI(publicSignals.clone(), L.clone());
 
-        let mut R0 = Self::compute_R0(proof.clone(), challenges, PI, L[1].clone());
+        let R0 = Self::compute_R0(proof, challenges, PI, L[1].clone());
 
-        let mut D = Self::compute_D(
-            proof.clone(), challenges, verification_key.clone(), L[1].clone()
-        );
+        let D = Self::compute_D(proof, challenges, verification_key, L[1].clone());
 
         let F = Self::compute_F(proof, challenges, verification_key, D);
 
@@ -73,6 +70,7 @@ impl PlonkVerifier of PVerifier {
 
         let valid_pairing = Self::valid_pairing(proof, challenges, verification_key, E, F);
         result = result && valid_pairing;
+
         result
     }
 
