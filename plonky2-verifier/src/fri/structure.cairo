@@ -2,18 +2,17 @@ use core::box::BoxTrait;
 use core::option::OptionTrait;
 use core::array::ArrayTrait;
 use plonky2_verifier::fields::goldilocks::{Goldilocks, GoldilocksZero};
-use plonky2_verifier::fields::goldilocks_quadratic::{
-    GoldilocksQuadratic, GoldilocksQuadraticZero, glq
-};
+use plonky2_verifier::fields::goldilocks_quadratic::{GoldilocksQuadratic, glq};
 use plonky2_verifier::fields::utils::{sum_array, max_array, pow, shift_left};
+use plonky2_verifier::plonk::circuit_data::Range;
 
-#[derive(Drop)]
+#[derive(Drop, Debug)]
 pub struct FriOracleInfo {
     pub num_polys: usize,
     pub blinding: bool
 }
 
-#[derive(Drop)]
+#[derive(Drop, Copy, Debug)]
 pub struct FriPolynomialInfo {
     /// Index into `FriInstanceInfo`'s `oracles` list.
     pub oracle_index: usize,
@@ -21,15 +20,31 @@ pub struct FriPolynomialInfo {
     pub polynomial_index: usize,
 }
 
+#[generate_trait]
+pub impl FriPolynomialInfoImpl of FriPolynomialInfoTrait {
+    fn from_range(
+        oracle_index: usize, plynomial_indecies: Range<usize>
+    ) -> Array<FriPolynomialInfo> {
+        let mut result = array![];
+        let mut i = plynomial_indecies.start;
+        while i < plynomial_indecies
+            .end {
+                result.append(FriPolynomialInfo { oracle_index, polynomial_index: i });
+                i += 1;
+            };
+        result
+    }
+}
+
 /// A batch of openings at a particular point.
-#[derive(Drop)]
+#[derive(Drop, Debug)]
 pub struct FriBatchInfo {
     pub point: GoldilocksQuadratic,
     pub polynomials: Array<FriPolynomialInfo>
 }
 
 /// Describes an instance of a FRI-based batch opening.
-#[derive(Drop)]
+#[derive(Drop, Debug)]
 pub struct FriInstanceInfo {
     /// The oracles involved, not counting oracles created during the commit phase.
     pub oracles: Array<FriOracleInfo>,
@@ -38,13 +53,13 @@ pub struct FriInstanceInfo {
 }
 
 /// Opened values of each polynomial that's opened at a particular point.
-#[derive(Drop, Copy)]
+#[derive(Drop, Copy, Debug)]
 pub struct FriOpeningBatch {
     pub values: Span<GoldilocksQuadratic>
 }
 
 /// Opened values of each polynomial.
-#[derive(Drop)]
+#[derive(Drop, Debug)]
 pub struct FriOpenings {
     pub batches: Array<FriOpeningBatch>
 }
@@ -60,13 +75,13 @@ pub struct FriChallenges {
     pub fri_query_indices: Array<usize>,
 }
 
-#[derive(Drop, Clone)]
+#[derive(Drop, Clone, Debug)]
 pub enum FriReductionStrategy {
     Fixed: Array<usize>,
     ConstantArityBits: (usize, usize),
 }
 
-#[derive(Drop, Clone)]
+#[derive(Drop, Clone, Debug)]
 pub struct FriConfig {
     pub rate_bits: usize,
     pub cap_height: usize,
@@ -75,7 +90,7 @@ pub struct FriConfig {
     pub num_query_rounds: usize,
 }
 
-#[derive(Drop)]
+#[derive(Drop, Debug)]
 pub struct FriParams {
     pub config: FriConfig,
     /// Whether to use a hiding variant of Merkle trees (where random salts are added to leaves).
@@ -90,7 +105,7 @@ pub struct FriParams {
 }
 
 
-#[derive(Drop)]
+#[derive(Drop, Debug)]
 pub struct ReducingFactor {
     pub base: GoldilocksQuadratic,
     pub count: u64,
@@ -110,7 +125,7 @@ impl ReducingFactorImpl of ReducingFactorTrait {
     fn reduce(
         ref self: ReducingFactor, batch_values: Span<GoldilocksQuadratic>
     ) -> GoldilocksQuadratic {
-        let mut acc = GoldilocksQuadraticZero::zero();
+        let mut acc = glq(0);
 
         // reverse the array
         let mut i = batch_values.len();
