@@ -2,7 +2,7 @@ use core::option::OptionTrait;
 use core::result::ResultTrait;
 use core::traits::TryInto;
 use core::integer::U128MulGuarantee;
-
+use plonky2_verifier::fields::field::F;
 use plonky2_verifier::fields::goldilocks::{Goldilocks, GoldilocksZero, gl, GoldilocksImpl};
 
 #[derive(Copy, Drop, Debug, PartialEq, Eq)]
@@ -96,6 +96,54 @@ pub impl GoldilocksQuadraticNeg of Neg<GoldilocksQuadratic> {
 
 pub fn glq(val: u64) -> GoldilocksQuadratic {
     GoldilocksQuadraticImpl::reduce_u64(val)
+}
+
+pub impl GoldilocksQuadraticField of F<GoldilocksQuadratic> {
+    fn TWO_ADICITY() -> usize {
+        33
+    }
+    fn CHARACTERISTIC_TWO_ADICITY() -> usize {
+        32
+    }
+    fn MULTIPLICATIVE_GROUP_GENERATOR() -> GoldilocksQuadratic {
+        GoldilocksQuadratic { a: Goldilocks { inner: 0 }, b: Goldilocks { inner: 11713931119993638672 } }
+    }
+
+    fn POWER_OF_TWO_GENERATOR() -> GoldilocksQuadratic {
+        GoldilocksQuadratic { a: Goldilocks { inner: 0 }, b: Goldilocks { inner: 7226896044987257365 } }
+    }
+
+    fn exp_power_of_2(self: @GoldilocksQuadratic, power_log: usize) -> GoldilocksQuadratic {
+        let mut res = *self;
+        let mut i = 0;
+        while i < power_log {
+            res = res * res;
+            i += 1;
+        };
+        res
+    }
+
+    fn exp_u64(self: @GoldilocksQuadratic, exp: u64) -> GoldilocksQuadratic {
+        let mut res = GoldilocksQuadratic { a: gl(1), b: gl(0) };
+        let mut exp = exp;
+        let mut base = *self;
+        while exp > 1 {
+            if exp % 2 == 0 {
+                base = base * base;
+                exp = exp / 2;
+            } else {
+                res = res * base;
+                exp = exp - 1;
+            }
+        };
+        res * base
+    }
+
+    fn primitive_root_of_unity(n_log: usize) -> GoldilocksQuadratic {
+        assert!(n_log <= GoldilocksQuadraticField::TWO_ADICITY());
+        let base = GoldilocksQuadraticField::POWER_OF_TWO_GENERATOR();
+        base.exp_power_of_2(GoldilocksQuadraticField::TWO_ADICITY() - n_log)
+    }
 }
 
 #[cfg(test)]
