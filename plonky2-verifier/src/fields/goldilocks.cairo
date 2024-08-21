@@ -44,6 +44,10 @@ pub impl GoldilocksImpl of GoldilocksTrait {
         let other = GoldilocksTrait::reduce_u64(val);
         self + other
     }
+
+    fn inv(self: Goldilocks) -> Goldilocks {
+        GoldilocksField::exp_u64(@self, P - 2)
+    }
 }
 
 pub impl GoldilocksAdd of core::traits::Add<Goldilocks> {
@@ -97,7 +101,6 @@ pub impl GoldilocksNeg of Neg<Goldilocks> {
     }
 }
 
-
 pub impl GoldilocksField of F<Goldilocks> {
     fn TWO_ADICITY() -> usize {
         32
@@ -146,6 +149,16 @@ pub impl GoldilocksField of F<Goldilocks> {
     }
 }
 
+pub impl GoldilocksDiv of core::traits::Div<Goldilocks> {
+    fn div(lhs: Goldilocks, rhs: Goldilocks) -> Goldilocks {
+        // Compute the multiplicative inverse of rhs
+        let inv = GoldilocksField::exp_u64(@rhs, P - 2);
+        // Multiply lhs by the inverse of rhs
+        lhs * inv
+    }
+}
+
+
 #[inline(always)]
 pub fn gl(val: u64) -> Goldilocks {
     GoldilocksImpl::reduce_u64(val)
@@ -172,5 +185,14 @@ mod tests {
         assert_eq!(gl(P - 1) + gl(1), gl(0));
         assert_eq!(gl(0) - gl(1), gl(P - 1));
         assert_eq!(gl(0) - gl(P - 1), gl(1));
+    }
+
+    #[test]
+    fn test_div() {
+        let a = gl(2);
+        let b = gl(3);
+        let res = a / b;
+        let recovered = res * b;
+        assert_eq!(recovered, a);
     }
 }

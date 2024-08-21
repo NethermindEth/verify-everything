@@ -35,6 +35,25 @@ pub impl GoldilocksQuadraticImpl of GoldilocksQuadraticTrait {
         let other = GoldilocksQuadraticTrait::reduce_u64(val);
         self + other
     }
+
+    fn inv(self: GoldilocksQuadratic) -> Option<GoldilocksQuadratic> {
+        let a = self.a;
+        let b = self.b;
+
+        // Calculate a^2 - b^2W in the base field
+        let norm = a * a - W * b * b;
+
+        // If norm is zero, the element is not invertible
+        if norm.is_zero() {
+            return Option::None;
+        }
+
+        // Calculate the inverse of norm in the base field
+        let norm_inv = norm.inv();
+
+        // Calculate (a - bX) * norm_inv
+        Option::Some(GoldilocksQuadratic { a: a * norm_inv, b: -b * norm_inv, })
+    }
 }
 
 pub impl GoldilocksQuadraticAdd of core::traits::Add<GoldilocksQuadratic> {
@@ -106,11 +125,15 @@ pub impl GoldilocksQuadraticField of F<GoldilocksQuadratic> {
         32
     }
     fn MULTIPLICATIVE_GROUP_GENERATOR() -> GoldilocksQuadratic {
-        GoldilocksQuadratic { a: Goldilocks { inner: 0 }, b: Goldilocks { inner: 11713931119993638672 } }
+        GoldilocksQuadratic {
+            a: Goldilocks { inner: 0 }, b: Goldilocks { inner: 11713931119993638672 }
+        }
     }
 
     fn POWER_OF_TWO_GENERATOR() -> GoldilocksQuadratic {
-        GoldilocksQuadratic { a: Goldilocks { inner: 0 }, b: Goldilocks { inner: 7226896044987257365 } }
+        GoldilocksQuadratic {
+            a: Goldilocks { inner: 0 }, b: Goldilocks { inner: 7226896044987257365 }
+        }
     }
 
     fn exp_power_of_2(self: @GoldilocksQuadratic, power_log: usize) -> GoldilocksQuadratic {
@@ -146,12 +169,24 @@ pub impl GoldilocksQuadraticField of F<GoldilocksQuadratic> {
     }
 }
 
+pub impl GoldilocksQuadraticDiv of core::traits::Div<GoldilocksQuadratic> {
+    fn div(lhs: GoldilocksQuadratic, rhs: GoldilocksQuadratic) -> GoldilocksQuadratic {
+        // Compute the multiplicative inverse of rhs
+        match rhs.inv() {
+            Option::Some(inv) => lhs * inv,
+            Option::None => panic!("Division by zero"),
+        }
+    }
+}
+
+
+
 #[cfg(test)]
 mod tests {
     use super::{
         gl, glq, GoldilocksQuadratic, GoldilocksQuadraticNeg, GoldilocksQuadraticOne,
         GoldilocksQuadraticZero, GoldilocksQuadraticAdd, GoldilocksQuadraticSub,
-        GoldilocksQuadraticMul
+        GoldilocksQuadraticMul, GoldilocksQuadraticField, GoldilocksQuadraticTrait
     };
 
     #[test]
@@ -222,5 +257,16 @@ mod tests {
         let c = a + b;
         let expected = GoldilocksQuadratic { a: gl(10), b: gl(16) };
         assert_eq!(c, expected);
+    }
+
+    #[test]
+    fn test_goldilocks_quadratic_inv() {
+        let a = GoldilocksQuadratic { a: gl(3), b: gl(5) };
+        let a_inv = a.inv().expect('Should be invertible');
+        let product = a * a_inv;
+        assert_eq!(product, GoldilocksQuadraticOne::one());
+
+        let zero = GoldilocksQuadraticZero::zero();
+        assert_eq!(zero.inv(), Option::<GoldilocksQuadratic>::None);
     }
 }
