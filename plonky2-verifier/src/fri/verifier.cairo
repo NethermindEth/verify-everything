@@ -9,7 +9,7 @@ use plonky2_verifier::fri::structure::{
 };
 use plonky2_verifier::hash::merkle_caps::{MerkleCaps, MerkleCapsImpl, MerkleProof};
 use plonky2_verifier::hash::structure::{HashOut, HashOutImpl};
-use plonky2_verifier::plonk::proof::{FriProof, FriInitialTreeProofTrait};
+use plonky2_verifier::plonk::proof::{FriProof, FriInitialTreeProofTrait, PolynomialCoeffsTrait};
 use plonky2_verifier::fri::structure::{PrecomputedReducedOpenings, PrecomputedReducedOpeningsImpl};
 use plonky2_verifier::plonk::proof::{FriQueryRound, FriInitialTreeProof};
 use plonky2_verifier::plonk::circuit_data::{
@@ -87,7 +87,11 @@ pub fn fri_verifier_query_round(
         params,
     );
 
-    
+    // todo: check arities
+    assert_eq!(
+        proof.final_poly.eval(GoldilocksQuadratic { a: subgroup_x, b: Goldilocks { inner: 0 } }),
+        old_eval
+    );
 
     Result::Ok(())
 }

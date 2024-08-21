@@ -75,6 +75,19 @@ pub struct PolynomialCoeffs<F> {
     pub coeffs: Array<F>,
 }
 
+#[generate_trait]
+pub impl PolynomialCoeffsImpl of PolynomialCoeffsTrait {
+    fn eval(self: @PolynomialCoeffs<GoldilocksQuadratic>, x: GoldilocksQuadratic) -> GoldilocksQuadratic {
+        let mut result = GoldilocksQuadratic { a: Goldilocks { inner: 0 }, b: Goldilocks { inner: 0 } };
+        let mut len = self.coeffs.len();
+        while len > 0 {
+            len -= 1;
+            result = result * x + *self.coeffs.get(len).unwrap().unbox();
+        };
+        result
+    }
+}
+
 #[derive(Drop, Debug)]
 pub struct FriProof {
     pub commit_phase_merkle_caps: Array<MerkleCaps>,
