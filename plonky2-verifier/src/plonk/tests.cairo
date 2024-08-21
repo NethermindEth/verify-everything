@@ -1,7 +1,7 @@
 #[cfg(test)]
 pub mod tests {
     use plonky2_verifier::plonk::proof::{Proof};
-    use plonky2_verifier::plonk::constants::sample_proof_1;
+    use plonky2_verifier::plonk::test_constants::sample_proof_1;
     use plonky2_verifier::hash::structure::HashOut;
     use plonky2_verifier::fields::goldilocks::{gl, Goldilocks};
     use plonky2_verifier::fields::goldilocks_quadratic::{GoldilocksQuadratic};

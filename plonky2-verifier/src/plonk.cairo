@@ -1,5 +1,5 @@
 pub mod proof;
-pub mod constants;
+pub mod test_constants;
 pub mod circuit_data;
-pub mod challenge;
+pub mod challenger;
 pub mod tests;

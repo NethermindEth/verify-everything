@@ -7,7 +7,7 @@ use plonky2_verifier::hash::poseidon::hash_no_pad;
 use plonky2_verifier::hash::structure::HashOut;
 use plonky2_verifier::fri::structure::{FriChallenges, FriOpenings, FriOpeningBatch};
 use plonky2_verifier::plonk::circuit_data::{CommonCircuitData, CommonCircuitDataImpl};
-use plonky2_verifier::plonk::challenge::{Challenger, ChallengerImpl, ChallengerTrait};
+use plonky2_verifier::plonk::challenger::{Challenger, ChallengerImpl, ChallengerTrait};
 use plonky2_verifier::fri::structure::{FriInstanceInfo, FriBatchInfo};
 
 #[derive(Drop, Debug)]

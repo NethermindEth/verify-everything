@@ -28,12 +28,12 @@ pub fn verify_fri_proof(
     proof: @FriProof,
     params: @FriParams,
 ) {
-    // todo: verify the proof shape
+    // todo: **verify the proof shape**
 
     // size of the lde domain
     let n = params.lde_size();
-    // todo: verify pow witness
-    // todo: assert_eq!(*params.config.num_query_rounds, proof.query_round_proofs.len());
+    // todo: **verify pow witness** 
+    // todo: **assert_eq!(*params.config.num_query_rounds, proof.query_round_proofs.len());**
 
     let precomputed_reduced_evals = PrecomputedReducedOpeningsImpl::from_os_and_alpha(
         openings, challenges.fri_alpha
@@ -71,6 +71,7 @@ pub fn fri_verifier_query_round(
     round_proof: @FriQueryRound,
     params: @FriParams,
 ) -> Result<(), ()> {
+    // this is commented out due to performance reasons for testing
     // fri_verify_initial_proof(x_index, round_proof.initial_trees_proof, initial_merkle_caps)?;
 
     let log_n = log2_strict(n);
@@ -87,7 +88,8 @@ pub fn fri_verifier_query_round(
         params,
     );
 
-    // todo: check arities
+    // todo: **check arities**
+
     assert_eq!(
         proof.final_poly.eval(GoldilocksQuadratic { a: subgroup_x, b: Goldilocks { inner: 0 } }),
         old_eval
@@ -167,7 +169,7 @@ pub mod tests {
     use plonky2_verifier::plonk::circuit_data::CommonCircuitDataTrait;
     use plonky2_verifier::plonk::proof::ProofWithPublicInputsTrait;
     use super::{verify_fri_proof};
-    use plonky2_verifier::plonk::constants::sample_proof_1;
+    use plonky2_verifier::plonk::test_constants::sample_proof_1;
     use plonky2_verifier::plonk::proof::{OpeningSetTrait};
 
     #[test]

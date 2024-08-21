@@ -222,7 +222,7 @@ pub impl ChallengerImpl of ChallengerTrait {
 pub mod tests {
     use core::traits::Into;
     use plonky2_verifier::fields::goldilocks::{gl};
-    use plonky2_verifier::plonk::challenge::ChallengerTrait;
+    use plonky2_verifier::plonk::challenger::ChallengerTrait;
     use super::{Challenger, ChallengerImpl};
 
     fn observer_range(ref challenger: Challenger, start: usize, end: usize) {
