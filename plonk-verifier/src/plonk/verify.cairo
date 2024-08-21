@@ -399,25 +399,10 @@ impl PlonkVerifier of PVerifier {
         B1 = B1.add(E.neg());
 
         let g2_one = AffineG2Impl::one();
-        println!("A1.neg() x: {:?}", A1.neg().x.c0);
-        println!("A1.neg() y: {:?}", A1.neg().y.c0);
-        println!("B1 x: {:?}", B1.x.c0);
-        println!("B1 y: {:?}", B1.y.c0);
-
-        println!("v2_x2_x: {:?}", vk.X_2.x.c0);
-        println!("v2_x2_x: {:?}", vk.X_2.x.c1);
-        println!("v2_x2_y: {:?}", vk.X_2.y.c0);
-        println!("v2_x2_y: {:?}", vk.X_2.y.c1);
-
-        println!("g2_one_x1: {:?}", g2_one.x.c0);
-        println!("g2_one_x2: {:?}", g2_one.x.c1);
-        println!("g2_one_y1: {:?}", g2_one.y.c0);
-        println!("g2_one_y2: {:?}", g2_one.y.c1);
 
         let e_A1_vk_x2 = tate_miller_loop(A1.neg(), vk.X_2);
         let e_B1_g2_1 = tate_miller_loop(B1, g2_one);
-        println!("e_A1_vk_x2: {:?}", e_A1_vk_x2);
-        println!("e_B1_g2_1: {:?}", e_B1_g2_1);
+
         let res = e_A1_vk_x2 == e_B1_g2_1;
         res
     }

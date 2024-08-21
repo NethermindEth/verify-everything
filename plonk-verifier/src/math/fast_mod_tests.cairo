@@ -202,10 +202,9 @@ fn test_all_mod_ops() {
     assert(res == mu512(max_u128, 3, 4, 4), 'incorrect u512 sub');
 
     let (scaled_u512, _) = f::u512_scl(mu512(4, 5, 6, 7), 9);
-    assert(scaled_u512.limb0 == 36, 'u512_scl incorrect limb0');
-    assert(scaled_u512.limb1 == 45, 'u512_scl incorrect limb1');
-    assert(scaled_u512.limb2 == 54, 'u512_scl incorrect limb2');
-    assert(scaled_u512.limb3 == 63, 'u512_scl incorrect limb3');
+    assert(
+        scaled_u512 == u512 { limb0: 36, limb1: 45, limb2: 54, limb3: 63, }, 'u512_scl incorrect'
+    );
 
     let (scaled_u512, ovf) = f::u512_scl(mu512(1, 2, 3, 4), a.low);
     let (alowx1_1, alowx1_0) = f::mul_scale_sqr::u128_wide_mul(a.low, 1);
@@ -219,14 +218,13 @@ fn test_all_mod_ops() {
     assert(ovf == alowx4_1, 'u512_scl incorrect limb3');
 
     let high_add_u512 = f::u512_high_add(mu512(4, 5, 6, 7), max_u128.into()).unwrap();
-    assert(high_add_u512.limb0 == 4, 'u512_high_add incorrect limb0');
-    assert(high_add_u512.limb1 == 5, 'u512_high_add incorrect limb1');
-    assert(high_add_u512.limb2 == 5, 'u512_high_add incorrect limb2');
-    assert(high_add_u512.limb3 == 8, 'u512_high_add incorrect limb3');
+
+    assert(
+        high_add_u512 == u512 { limb0: 4, limb1: 5, limb2: 5, limb3: 8 }, 'u512_high_add incorrect'
+    );
 
     let high_sub_u512 = f::u512_high_sub(mu512(4, 5, 6, 7), 2).unwrap();
-    assert(high_sub_u512.limb0 == 4, 'high_sub_u512 incorrect limb0');
-    assert(high_sub_u512.limb1 == 5, 'high_sub_u512 incorrect limb1');
-    assert(high_sub_u512.limb2 == 4, 'high_sub_u512 incorrect limb2');
-    assert(high_sub_u512.limb3 == 7, 'high_sub_u512 incorrect limb3');
+    assert(
+        high_sub_u512 == u512 { limb0: 4, limb1: 5, limb2: 4, limb3: 7 }, 'high_sub_u512 incorrect'
+    );
 }
