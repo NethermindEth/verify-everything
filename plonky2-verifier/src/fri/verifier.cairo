@@ -9,7 +9,7 @@ use plonky2_verifier::fri::structure::{
 };
 use plonky2_verifier::hash::merkle_caps::{MerkleCaps, MerkleCapsImpl, MerkleProof};
 use plonky2_verifier::hash::structure::{HashOut, HashOutImpl};
-use plonky2_verifier::plonk::proof::{FriProof};
+use plonky2_verifier::plonk::proof::{FriProof, FriInitialTreeProofTrait};
 use plonky2_verifier::fri::structure::{PrecomputedReducedOpenings, PrecomputedReducedOpeningsImpl};
 use plonky2_verifier::plonk::proof::{FriQueryRound, FriInitialTreeProof};
 use plonky2_verifier::plonk::circuit_data::{
@@ -17,6 +17,8 @@ use plonky2_verifier::plonk::circuit_data::{
 };
 use plonky2_verifier::fields::utils::{log2_strict, reverse_bits};
 use plonky2_verifier::fields::goldilocks::{GoldilocksField, Goldilocks};
+use plonky2_verifier::fields::goldilocks_quadratic::{GoldilocksQuadratic};
+use plonky2_verifier::fri::structure::{ReducingFactor, ReducingFactorImpl};
 
 pub fn verify_fri_proof(
     instance: @FriInstanceInfo,
@@ -39,7 +41,6 @@ pub fn verify_fri_proof(
 
     let num_query_rounds = *params.config.num_query_rounds;
     let mut i = 0;
-    println!("num_query_rounds {:?}", num_query_rounds);
     while i < num_query_rounds {
         let mut x_index = *challenges.fri_query_indices.get(i).unwrap().unbox();
         let round_proof = proof.query_round_proofs.get(i).unwrap().unbox();
@@ -77,6 +78,17 @@ pub fn fri_verifier_query_round(
         * GoldilocksField::primitive_root_of_unity(log_n)
             .exp_u64(reverse_bits(x_index, log_n).into());
 
+    let mut old_eval = fri_combine_initial(
+        instance,
+        round_proof.initial_trees_proof,
+        *challenges.fri_alpha,
+        subgroup_x,
+        precomputed_reduced_evals,
+        params,
+    );
+
+    
+
     Result::Ok(())
 }
 
@@ -100,6 +112,51 @@ pub fn fri_verify_initial_proof(
     result
 }
 
+fn fri_combine_initial(
+    instance: @FriInstanceInfo,
+    proof: @FriInitialTreeProof,
+    alpha: GoldilocksQuadratic,
+    subgroup_x: Goldilocks,
+    precomputed_reduced_evals: @PrecomputedReducedOpenings,
+    params: @FriParams,
+) -> GoldilocksQuadratic {
+    let subgroup_x = GoldilocksQuadratic { a: subgroup_x, b: Goldilocks { inner: 0 } };
+    let mut alpha = ReducingFactorImpl::new(alpha);
+    let mut sum = GoldilocksQuadratic { a: Goldilocks { inner: 0 }, b: Goldilocks { inner: 0 } };
+
+    let mut i = 0;
+    loop {
+        if i >= instance.batches.len() {
+            break;
+        }
+        let batch = instance.batches.get(i).unwrap().unbox();
+        let reduced_openings = precomputed_reduced_evals.reduced_openings_at_point[i];
+
+        let FriBatchInfo { point, polynomials } = batch;
+        let mut evals = array![];
+        let mut j = 0;
+        let len = polynomials.len();
+        while j < len {
+            let p: FriPolynomialInfo = *polynomials[j];
+            let oracle: FriOracleInfo = *instance.oracles.get(p.oracle_index).unwrap().unbox();
+            let poly_blinding: bool = oracle.blinding;
+            let salted = *params.hiding && poly_blinding;
+            let eval = proof.unsalted_eval(p.oracle_index, p.polynomial_index, salted);
+            evals.append(eval);
+            j += 1;
+        };
+
+        let reduced_evals = alpha.reduce(evals.span());
+        let numerator = reduced_evals - *reduced_openings;
+        let denominator = subgroup_x - *point;
+        sum = alpha.shift(sum);
+        sum = sum + (numerator / denominator);
+
+        i += 1;
+    };
+
+    sum
+}
 
 #[cfg(test)]
 pub mod tests {
@@ -137,3 +194,4 @@ pub mod tests {
         );
     }
 }
+

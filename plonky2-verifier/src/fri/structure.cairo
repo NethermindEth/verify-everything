@@ -2,11 +2,13 @@ use core::box::BoxTrait;
 use core::option::OptionTrait;
 use core::array::ArrayTrait;
 use plonky2_verifier::fields::goldilocks::{Goldilocks, GoldilocksZero};
-use plonky2_verifier::fields::goldilocks_quadratic::{GoldilocksQuadratic, glq};
+use plonky2_verifier::fields::goldilocks_quadratic::{
+    GoldilocksQuadratic, glq, GoldilocksQuadraticField
+};
 use plonky2_verifier::fields::utils::{sum_array, max_array, pow, shift_left};
 use plonky2_verifier::plonk::circuit_data::Range;
 
-#[derive(Drop, Debug)]
+#[derive(Drop, Copy, Debug)]
 pub struct FriOracleInfo {
     pub num_polys: usize,
     pub blinding: bool
@@ -112,7 +114,7 @@ pub struct ReducingFactor {
 }
 
 #[generate_trait]
-impl ReducingFactorImpl of ReducingFactorTrait {
+pub impl ReducingFactorImpl of ReducingFactorTrait {
     fn new(base: GoldilocksQuadratic) -> ReducingFactor {
         ReducingFactor { base: base, count: 0 }
     }
@@ -136,6 +138,12 @@ impl ReducingFactorImpl of ReducingFactorTrait {
         };
 
         acc
+    }
+
+    fn shift(ref self: ReducingFactor, x: GoldilocksQuadratic) -> GoldilocksQuadratic {
+        let tmp = self.base.exp_u64(self.count) * x;
+        self.count = 0;
+        tmp
     }
 }
 

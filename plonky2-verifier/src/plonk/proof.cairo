@@ -1,3 +1,4 @@
+use core::box::BoxTrait;
 use core::array::ArrayTrait;
 use plonky2_verifier::hash::merkle_caps::{MerkleCaps, MerkleProof};
 use plonky2_verifier::fields::goldilocks_quadratic::GoldilocksQuadratic;
@@ -43,6 +44,18 @@ pub impl OpeningSetImpl of OpeningSetTrait {
 #[derive(Drop, Debug)]
 pub struct FriInitialTreeProof {
     pub evals_proofs: Array<(Array<Goldilocks>, MerkleProof)>
+}
+
+#[generate_trait]
+pub impl FriInitialTreeProofImpl of FriInitialTreeProofTrait {
+    fn unsalted_eval(
+        self: @FriInitialTreeProof, oracle_index: usize, polynomial_index: usize, salted: bool
+    ) -> GoldilocksQuadratic {
+        let (evals, _) = self.evals_proofs.get(oracle_index).unwrap().unbox();
+        GoldilocksQuadratic {
+            a: *evals.get(polynomial_index).unwrap().unbox(), b: Goldilocks { inner: 0 }
+        }
+    }
 }
 
 #[derive(Drop, Debug)]
