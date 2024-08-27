@@ -58,7 +58,6 @@ fn fq6_with_issue() -> Fq6 {
 }
 
 #[test]
-#[available_gas(500000000)]
 fn add_sub() {
     let a = fq6(34, 645, 31, 55, 140, 105);
     let b = fq6(25, 45, 11, 43, 86, 101);
@@ -68,7 +67,6 @@ fn add_sub() {
 }
 
 #[test]
-#[available_gas(500000000)]
 fn one() {
     let a = fq6(34, 645, 20, 55, 140, 105);
     let one = FieldUtils::one();
@@ -76,14 +74,12 @@ fn one() {
 }
 
 #[test]
-#[available_gas(500000000)]
 fn sqr() {
     let a = fq6_with_issue();
     assert(a * a == a.sqr(), 'incorrect square');
 }
 
 #[test]
-#[available_gas(500000000)]
 fn mul() {
     let a = a();
     let b = b();
@@ -93,7 +89,6 @@ fn mul() {
 }
 
 #[test]
-#[available_gas(500000000)]
 fn mul_assoc() {
     let a = a();
     let b = b();
@@ -105,7 +100,6 @@ fn mul_assoc() {
 }
 
 #[test]
-#[available_gas(500000000)]
 fn div() {
     let a = fq6(34, 645, 20, 12, 54, 4);
     let b = fq6(25, 45, 11, 43, 86, 101);
@@ -114,7 +108,6 @@ fn div() {
 }
 
 #[test]
-#[available_gas(500000000)]
 fn inv() {
     core::internal::revoke_ap_tracking();
     let b_inv = b().inv(get_field_nz());

@@ -4,8 +4,8 @@ mod constants;
 mod groups;
 
 use constants::{
-    T, ORDER, FIELD, FIELD_NZ, get_field_nz, FIELD_X2, FIELDSQLOW, FIELDSQHIGH, U256_MOD_FIELD,
-    U256_MOD_FIELD_INV, B, t_naf
+    T, ORDER, ORDER_NZ, get_order_nz, FIELD, FIELD_NZ, get_field_nz, FIELD_X2, FIELDSQLOW,
+    FIELDSQHIGH, U256_MOD_FIELD, U256_MOD_FIELD_INV, B, t_naf
 };
 use constants::{ATE_LOOP_COUNT, LOG_ATE_LOOP_COUNT, six_t_plus_2_naf_rev_trimmed};
 use plonk_verifier::fields::print::u512Display;
@@ -20,7 +20,7 @@ mod pairing {
     mod optimal_ate_utils;
     mod optimal_ate_impls;
     mod optimal_ate;
-// #[cfg(test)]
+    // #[cfg(test)]
 // mod ate_tests;
 // #[cfg(test)]
 // mod tests;
@@ -30,7 +30,10 @@ use plonk_verifier::fields as f;
 use plonk_verifier::math::fast_mod as m;
 use m::{u512};
 use m::utils::u128_overflowing_sub;
-use m::{add_u, sub_u, mul_u, sqr_u, scl_u, reduce, u512_add, u512_sub};
+use m::{
+    add_u, add_nz, sub, sub_u, mul_u, mul_nz, div_nz, sqr_u, sqr_nz, scl_u, reduce, u512_add,
+    u512_sub
+};
 use m::{u512_add_u256, u512_sub_u256, u512_add_overflow, u512_sub_overflow, u512_scl, u512_reduce};
 use m::{Tuple2Add, Tuple2Sub, Tuple3Add, Tuple3Sub};
 use f::{SixU512};
@@ -242,6 +245,11 @@ fn neg(b: u256) -> u256 {
 }
 
 #[inline(always)]
+fn neg_o(b: u256) -> u256 {
+    m::neg(b, ORDER)
+}
+
+#[inline(always)]
 fn add(mut a: u256, mut b: u256) -> u256 {
     m::add(a, b, FIELD)
 }
@@ -252,7 +260,7 @@ fn sqr(mut a: u256) -> u256 {
 }
 
 #[inline(always)]
-fn sub(mut a: u256, mut b: u256) -> u256 {
+fn sub_field(mut a: u256, mut b: u256) -> u256 {
     m::sub(a, b, FIELD)
 }
 

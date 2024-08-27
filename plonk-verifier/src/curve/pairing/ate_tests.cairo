@@ -23,7 +23,6 @@ fn points() -> (PtG1, PtG2) {
 }
 
 #[test]
-#[available_gas(2500000)]
 fn test_step_double() {
     let (p, mut q) = points();
     let (pc, _): (PreCompute, AffineG2) = (p, q).precompute(get_field_nz());
@@ -53,7 +52,6 @@ fn test_step_double() {
 }
 
 #[test]
-#[available_gas(2500000)]
 fn test_step_dbl_add() {
     let (p, q) = points();
     let (pc, _): (PreCompute, AffineG2) = (p, q).precompute(get_field_nz());
@@ -102,7 +100,6 @@ fn test_step_dbl_add() {
 }
 
 #[test]
-#[available_gas(25000000)]
 fn test_step_correction() {
     let (p, q) = points();
     let (pc, _): (PreCompute, AffineG2) = (p, q).precompute(get_field_nz());
@@ -146,6 +143,6 @@ fn test_step_correction() {
     assert(l1.c4 == expected_l1c4, 'wrong correction l1c4');
     assert(l2.c3 == expected_l2c3, 'wrong correction l2c3');
     assert(l2.c4 == expected_l2c4, 'wrong correction l2c4');
-// We skip final point operation to save costs
+    // We skip final point operation to save costs
 // assert(q == expected, 'wrong correction point');
 }

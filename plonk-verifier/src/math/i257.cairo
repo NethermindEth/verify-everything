@@ -219,14 +219,14 @@ impl i257PartialEq of PartialEq<i257> {
 // Implements the PartialOrd trait for i257.
 impl i257PartialOrd of PartialOrd<i257> {
     fn le(lhs: i257, rhs: i257) -> bool {
-        !i257PartialOrd::gt(lhs, rhs)
+        !Self::gt(lhs, rhs)
     }
     fn ge(lhs: i257, rhs: i257) -> bool {
-        i257PartialOrd::gt(lhs, rhs) || lhs == rhs
+        Self::gt(lhs, rhs) || lhs == rhs
     }
 
     fn lt(lhs: i257, rhs: i257) -> bool {
-        !i257PartialOrd::gt(lhs, rhs) && lhs != rhs
+        !Self::gt(lhs, rhs) && lhs != rhs
     }
 
     fn gt(lhs: i257, rhs: i257) -> bool {
