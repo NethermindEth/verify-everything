@@ -6,27 +6,25 @@ use core::to_byte_array::FormatAsByteArray;
 use core::traits::Into;
 use plonky2_verifier::fields::goldilocks::GoldilocksTrait;
 use plonky2_verifier::fields::goldilocks::{Goldilocks, gl};
-use plonky2_verifier::hash::poseidon_state::PoseidonStateArrarTrait;
-use plonky2_verifier::hash::poseidon_state::{
-    PoseidonState, PoseidonStateArray, HashOut, HashOutImpl
-};
+use plonky2_verifier::hash::structure::PoseidonStateArrarTrait;
+use plonky2_verifier::hash::structure::{PoseidonState, PoseidonStateArray, HashOut, HashOutImpl};
 
 use core::cmp::{min, max};
 
-use plonky2_verifier::hash::poseidon_constants::{
+use plonky2_verifier::hash::constants::{
     ALL_ROUND_CONSTANTS, HALF_N_FULL_ROUNDS, MDS_MATRIX_CIRC, MDS_MATRIX_DIAG, SPONGE_WIDTH,
     SPONGE_RATE, FAST_PARTIAL_ROUND_VS, FAST_PARTIAL_ROUND_W_HATS,
     FAST_PARTIAL_FIRST_ROUND_CONSTANT, FAST_PARTIAL_ROUND_INITIAL_MATRIX, N_PARTIAL_ROUNDS,
     FAST_PARTIAL_ROUND_CONSTANTS
 };
 
-#[derive(Clone, Drop, Debug)]
+#[derive(Clone, Copy, Drop, Debug)]
 pub struct PoseidonPermutation {
     pub state: PoseidonState,
 }
 
 #[generate_trait]
-impl PoseidonPermuter of Permuter {
+pub impl PoseidonPermutationImpl of PoseidonPermutationTrait {
     fn default() -> PoseidonPermutation {
         PoseidonPermutation { state: PoseidonStateArray::default(), }
     }
@@ -292,7 +290,7 @@ impl PoseidonTrait of Poseidon {
 }
 
 pub fn hash_n_to_m_no_pad(inputs: Span<Goldilocks>, num_outputs: usize) -> Span<Goldilocks> {
-    let mut perm = Permuter::default();
+    let mut perm = PoseidonPermutationImpl::default();
 
     // Absorb all input chunks.
     let mut chunk_start_idx = 0;
@@ -310,7 +308,7 @@ pub fn hash_n_to_m_no_pad(inputs: Span<Goldilocks>, num_outputs: usize) -> Span<
     // Squeeze until we have the desired number of outputs.
     let mut outputs = array![];
     loop {
-        let squeezed = perm.clone().squeeze();
+        let squeezed = perm.squeeze();
         let remaining = num_outputs - outputs.len();
         outputs.append_span(squeezed.slice(0, min(squeezed.len(), remaining)));
 
@@ -325,15 +323,22 @@ pub fn hash_n_to_m_no_pad(inputs: Span<Goldilocks>, num_outputs: usize) -> Span<
 }
 
 pub fn hash_two_to_one(x: HashOut, y: HashOut) -> HashOut {
-    let mut perm = Permuter::default();
-    perm.set_from_slice(x.elemets, 0);
-    perm.set_from_slice(y.elemets, 4);
+    let mut perm = PoseidonPermutationImpl::default();
+    perm.set_from_slice(x.elements, 0);
+    perm.set_from_slice(y.elements, 4);
 
     perm.permute();
 
     HashOutImpl::new(perm.squeeze().slice(0, 4))
 }
 
+pub fn hash_n_to_hash_no_pad(input: Span<Goldilocks>) -> HashOut {
+    HashOutImpl::new(hash_n_to_m_no_pad(input, 4))
+}
+// hash_n_to_hash_no_pad could be used directly, however to keep the same interface as the original code, we define hash_no_pad
+pub fn hash_no_pad(input: Span<Goldilocks>) -> HashOut {
+    hash_n_to_hash_no_pad(input)
+}
 
 #[cfg(test)]
 mod tests {
@@ -343,7 +348,7 @@ mod tests {
     use super::{
         hash_n_to_m_no_pad, gl, PoseidonStateArray, PoseidonTrait, hash_two_to_one, HashOut
     };
-    use plonky2_verifier::hash::poseidon_state::{PoseidonState, HashOutImpl};
+    use plonky2_verifier::hash::structure::{PoseidonState, HashOutImpl};
 
     #[test]
     fn test_constant_layer() {

@@ -9,12 +9,14 @@ use core::to_byte_array::FormatAsByteArray;
 use core::traits::Into;
 use plonky2_verifier::fields::goldilocks::GoldilocksTrait;
 use plonky2_verifier::fields::goldilocks::{Goldilocks, gl};
+use plonky2_verifier::fields::utils::{log2_strict};
 use plonky2_verifier::hash::poseidon::{hash_two_to_one};
-use plonky2_verifier::hash::poseidon_state::{HashOut, HashOutImpl};
+use plonky2_verifier::hash::structure::{HashOut, HashOutImpl};
+
 
 /// The Merkle cap of height `h` of a Merkle tree is the `h`-th layer (from the root) of the tree.
 /// It can be used in place of the root to verify Merkle paths, which are `h` elements shorter.
-#[derive(Drop, Debug)]
+#[derive(Drop, Clone, Debug)]
 pub struct MerkleCaps {
     pub data: Array<HashOut>
 }
@@ -24,19 +26,8 @@ pub struct MerkleProof {
     pub siblings: Array<HashOut>,
 }
 
-/// helper function to calculate the log base 2 of a number
-fn log2_strict(x: usize) -> usize {
-    let mut y = 0;
-    let mut z = x;
-    while z > 1 {
-        z = z / 2;
-        y = y + 1;
-    };
-    y
-}
-
 #[generate_trait]
-impl MerkleCapsImpl of MerkleCapsTrait {
+pub impl MerkleCapsImpl of MerkleCapsTrait {
     fn default() -> MerkleCaps {
         MerkleCaps { data: array![] }
     }
@@ -186,7 +177,7 @@ impl MerkleTreeImpl of MerkleTreeTrait {
 }
 #[cfg(test)]
 mod tests {
-    use plonky2_verifier::merkle::merkle_caps::MerkleCapsTrait;
+    use plonky2_verifier::hash::merkle_caps::MerkleCapsTrait;
     use core::traits::Into;
     use super::{gl, HashOut, MerkleTreeImpl, MerkleCapsImpl, MerkleTree, HashOutImpl};
 

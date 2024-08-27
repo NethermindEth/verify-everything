@@ -25,15 +25,18 @@ pub impl GoldilocksImpl of GoldilocksTrait {
         Goldilocks { inner: res.try_into().unwrap() }
     }
 
+
     fn reduce_u256(val: u256) -> Goldilocks {
         let (_, res, _) = u256_safe_divmod(val, P256NZ);
         Goldilocks { inner: res.try_into().unwrap() }
     }
 
+
     fn reduce_u128(val: u128) -> Goldilocks {
         let (_, res) = core::integer::u128_safe_divmod(val, P128NZ);
         Goldilocks { inner: res.try_into().unwrap() }
     }
+
 
     fn add_u64(ref self: Goldilocks, val: u64) -> Goldilocks {
         let other = GoldilocksTrait::reduce_u64(val);
@@ -92,6 +95,7 @@ pub impl GoldilocksNeg of Neg<Goldilocks> {
     }
 }
 
+#[inline(always)]
 pub fn gl(val: u64) -> Goldilocks {
     GoldilocksImpl::reduce_u64(val)
 }
