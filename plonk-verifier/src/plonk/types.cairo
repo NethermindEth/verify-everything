@@ -2,6 +2,7 @@ use core::array::ArrayTrait;
 use core::traits::Into;
 use plonk_verifier::curve::groups::{AffineG1, AffineG2};
 use plonk_verifier::fields::{Fq};
+use core::fmt::{Display, Formatter, Error};
 
 #[derive(Copy, Drop)]
 struct PlonkProof {
@@ -26,6 +27,8 @@ struct PlonkProof {
 struct PlonkVerificationKey {
     n: u256,
     power: u256,
+    k1: u256,
+    k2: u256,
     nPublic: u256,
     nLagrange: u256,
     Qm: AffineG1,
@@ -40,7 +43,7 @@ struct PlonkVerificationKey {
     w: u256
 }
 
-#[derive(Drop)]
+#[derive(Debug, Drop, Copy)]
 struct PlonkChallenge {
     beta: Fq,
     gamma: Fq,
@@ -48,6 +51,27 @@ struct PlonkChallenge {
     xi: Fq,
     xin: Fq,
     zh: Fq,
-    v: Array<Fq>,
+    v1: Fq,
+    v2: Fq,
+    v3: Fq,
+    v4: Fq,
+    v5: Fq,
     u: Fq
+}
+
+impl PlonkChallengePartialEq of PartialEq<PlonkChallenge> {
+    fn eq(lhs: @PlonkChallenge, rhs: @PlonkChallenge) -> bool {
+        lhs.beta == rhs.beta
+            && lhs.gamma == rhs.gamma
+            && lhs.alpha == rhs.alpha
+            && lhs.xi == rhs.xi
+            && lhs.xin == rhs.xin
+            && lhs.zh == rhs.zh
+            && lhs.v1 == rhs.v1
+            && lhs.v2 == rhs.v2
+            && lhs.v3 == rhs.v3
+            && lhs.v4 == rhs.v4
+            && lhs.v5 == rhs.v5
+            && lhs.u == rhs.u
+    }
 }

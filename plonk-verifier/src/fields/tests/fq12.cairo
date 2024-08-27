@@ -80,7 +80,6 @@ fn axb() -> Fq12 {
 }
 
 #[test]
-#[available_gas(50000000)]
 fn add_sub() {
     let a = fq12(34, 645, 31, 55, 140, 105, 2, 2, 2, 2, 2, 2);
     let b = fq12(25, 45, 11, 43, 86, 101, 1, 1, 1, 1, 1, 1);
@@ -90,7 +89,6 @@ fn add_sub() {
 }
 
 #[test]
-#[available_gas(50000000)]
 fn one() {
     let a = fq12(34, 645, 31, 55, 140, 105, 1, 1, 1, 1, 1, 1);
     let one = FieldUtils::one();
@@ -98,20 +96,17 @@ fn one() {
 }
 
 #[test]
-#[available_gas(50000000)]
 fn sqr() {
     let a = fq12_with_issue();
     assert(a.sqr() == a * a, 'incorrect square');
 }
 
 #[test]
-#[available_gas(50000000)]
 fn mul() {
     assert(a() * b() == axb(), 'incorrect mul');
 }
 
 #[test]
-#[available_gas(50000000)]
 fn mul_assoc() {
     let a = a();
     let b = b();
@@ -123,7 +118,6 @@ fn mul_assoc() {
 }
 
 #[test]
-#[available_gas(50000000)]
 fn div() {
     let a = fq12(34, 645, 31, 55, 140, 105, 1, 1, 1, 1, 1, 1);
     let b = fq12(25, 45, 11, 43, 86, 101, 1, 1, 1, 1, 1, 1);
@@ -132,7 +126,6 @@ fn div() {
 }
 
 #[test]
-#[available_gas(50000000)]
 fn inv() {
     let a = fq12(34, 645, 31, 55, 140, 105, 1, 1, 1, 1, 1, 1);
     let b = fq12(25, 45, 11, 43, 86, 101, 1, 1, 1, 1, 1, 1);

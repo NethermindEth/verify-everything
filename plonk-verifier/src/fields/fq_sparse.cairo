@@ -58,7 +58,7 @@ impl Fq12Sparse034PartialEq of PartialEq<Fq12Sparse034> {
 
     #[inline(always)]
     fn ne(lhs: @Fq12Sparse034, rhs: @Fq12Sparse034) -> bool {
-        !Fq12Sparse034PartialEq::eq(lhs, rhs)
+        !Self::eq(lhs, rhs)
     }
 }
 
@@ -70,7 +70,7 @@ impl Fq12Sparse01234PartialEq of PartialEq<Fq12Sparse01234> {
 
     #[inline(always)]
     fn ne(lhs: @Fq12Sparse01234, rhs: @Fq12Sparse01234) -> bool {
-        !Fq12Sparse01234PartialEq::eq(lhs, rhs)
+        !Self::eq(lhs, rhs)
     }
 }
 

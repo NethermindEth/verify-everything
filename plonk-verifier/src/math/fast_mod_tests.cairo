@@ -1,32 +1,3 @@
-// test plonk_verifier::math::fast_mod_tests::bench_plain::add ... ok (gas usage est.: 3530)
-// test plonk_verifier::math::fast_mod_tests::bench_plain::div ... ok (gas usage est.: 6950)
-// test plonk_verifier::math::fast_mod_tests::bench_plain::mul ... ok (gas usage est.: 15390)
-// test plonk_verifier::math::fast_mod_tests::bench_plain::rem ... ok (gas usage est.: 6950)
-// test plonk_verifier::math::fast_mod_tests::bench_plain::sub ... ok (gas usage est.: 3530)
-// test plonk_verifier::math::fast_mod_tests::bench::add ... ok (gas usage est.: 9060)
-// test plonk_verifier::math::fast_mod_tests::bench::add_u ... ok (gas usage est.: 3110)
-// test plonk_verifier::math::fast_mod_tests::bench::div ... ok (gas usage est.: 69700)
-// test plonk_verifier::math::fast_mod_tests::bench::div_u ... ok (gas usage est.: 48510)
-// test plonk_verifier::math::fast_mod_tests::bench::inv ... ok (gas usage est.: 28870)
-// test plonk_verifier::math::fast_mod_tests::bench::mul ... ok (gas usage est.: 41830)
-// test plonk_verifier::math::fast_mod_tests::bench::mul_u ... ok (gas usage est.: 20130)
-// test plonk_verifier::math::fast_mod_tests::bench::rdc ... ok (gas usage est.: 6950)
-// test plonk_verifier::math::fast_mod_tests::bench::scl ... ok (gas usage est.: 28430)
-// test plonk_verifier::math::fast_mod_tests::bench::scl_u ... ok (gas usage est.: 7140)
-// test plonk_verifier::math::fast_mod_tests::bench::sqr ... ok (gas usage est.: 38100)
-// test plonk_verifier::math::fast_mod_tests::bench::sqr_u ... ok (gas usage est.: 16900)
-// test plonk_verifier::math::fast_mod_tests::bench::sub ... ok (gas usage est.: 5240)
-// test plonk_verifier::math::fast_mod_tests::bench::sub_u ... ok (gas usage est.: 3110)
-// test plonk_verifier::math::fast_mod_tests::bench::u512_add ... ok (gas usage est.: 7980)
-// test plonk_verifier::math::fast_mod_tests::bench::u512_add_high ... ok (gas usage est.: 3420)
-// test plonk_verifier::math::fast_mod_tests::bench::u512_add_u256 ... ok (gas usage est.: 4960)
-// test plonk_verifier::math::fast_mod_tests::bench::u512_rdc ... ok (gas usage est.: 21390)
-// test plonk_verifier::math::fast_mod_tests::bench::u512_scl ... ok (gas usage est.: 14950)
-// test plonk_verifier::math::fast_mod_tests::bench::u512_sub ... ok (gas usage est.: 7980)
-// test plonk_verifier::math::fast_mod_tests::bench::u512_sub_high ... ok (gas usage est.: 3420)
-// test plonk_verifier::math::fast_mod_tests::bench::u512_sub_u256 ... ok (gas usage est.: 4960)
-// test plonk_verifier::math::fast_mod_tests::test_all_mod_ops ... ok (gas usage est.: 363770)
-
 use core::option::OptionTrait;
 use core::traits::TryInto;
 use plonk_verifier::fast_mod as f;
@@ -50,133 +21,111 @@ mod bench {
     use f::{u512};
     use super::{a, b, FIELD, get_field_nz};
     #[test]
-    #[available_gas(1000000)]
     fn add() {
         f::add(a, b, FIELD);
     }
 
     #[test]
-    #[available_gas(1000000)]
     fn sub() {
         f::sub(a, b, FIELD);
     }
 
     #[test]
-    #[available_gas(1000000)]
     fn mul() {
         f::mul(a, b, FIELD);
     }
 
     #[test]
-    #[available_gas(1000000)]
     fn scl() {
         f::scl(a, b.low, get_field_nz());
     }
 
     #[test]
-    #[available_gas(1000000)]
     fn sqr() {
         f::sqr_nz(a, get_field_nz());
     }
 
     #[test]
-    #[available_gas(100000000)]
     fn div() {
         f::div(a, b, FIELD);
     }
 
     #[test]
-    #[available_gas(100000000)]
     fn inv() {
         f::inv(a, get_field_nz());
     }
 
     #[test]
-    #[available_gas(100000000)]
     fn rdc() {
         f::reduce(a, b.try_into().unwrap());
     }
 
     #[test]
-    #[available_gas(1000000)]
     fn add_u() {
         f::add_u(a, b);
     }
 
     #[test]
-    #[available_gas(1000000)]
     fn sub_u() {
         f::sub_u(a, b);
     }
 
     #[test]
-    #[available_gas(1000000)]
     fn mul_u() {
         f::mul_u(a, b);
     }
 
     #[test]
-    #[available_gas(1000000)]
     fn scl_u() {
         f::scl_u(a, b.low);
     }
 
     #[test]
-    #[available_gas(1000000)]
     fn sqr_u() {
         f::sqr_u(a);
     }
 
     #[test]
-    #[available_gas(100000000)]
     fn div_u() {
         f::div_u(a, b, get_field_nz());
     }
 
     #[test]
-    #[available_gas(100000000)]
     fn u512_add() {
         f::u512_add(mu512(a.low, a.high, b.low, b.high), mu512(b.low, b.high, a.low, a.high));
     }
 
     #[test]
-    #[available_gas(100000000)]
     fn u512_add_high() {
         f::u512_high_add(mu512(a.low, a.high, b.low, b.high), 5).unwrap();
     }
 
     #[test]
-    #[available_gas(100000000)]
     fn u512_add_u256() {
         f::u512_add_u256(mu512(a.low, a.high, b.low, b.high), 5);
     }
 
     #[test]
-    #[available_gas(100000000)]
     fn u512_sub() {
         f::u512_sub(mu512(b.low, b.high, a.low, a.high), mu512(a.low, a.high, b.low, b.high));
     }
 
     #[test]
-    #[available_gas(100000000)]
     fn u512_sub_high() {
         f::u512_high_sub(mu512(a.low, a.high, b.low, b.high), 5).unwrap();
     }
 
     #[test]
-    #[available_gas(100000000)]
     fn u512_sub_u256() {
         f::u512_sub_u256(mu512(a.low, a.high, b.low, b.high), 5);
     }
 
     #[test]
-    #[available_gas(100000000)]
     fn u512_rdc() {
         f::u512_reduce(mu512(a.low, a.high, b.low, b.high), b.try_into().unwrap());
     }
 
     #[test]
-    #[available_gas(100000000)]
     fn u512_scl() {
         f::u512_scl(mu512(a.low, a.high, b.low, b.high), b.low);
     }
@@ -186,38 +135,32 @@ mod bench_plain {
     use core::traits::TryInto;
     use super::{a, b, FIELD};
     #[test]
-    #[available_gas(1000000)]
     fn add() {
         a + b;
     }
 
     #[test]
-    #[available_gas(1000000)]
     fn sub() {
         a - b;
     }
 
     #[test]
-    #[available_gas(1000000)]
     fn mul() {
         7_u256 * 909954701390400359078579693043519447331968015179411397891806486841532663803;
     }
 
     #[test]
-    #[available_gas(100000000)]
     fn div() {
         a / b;
     }
 
     #[test]
-    #[available_gas(100000000)]
     fn rem() {
         a % b;
     }
 }
 
 #[test]
-#[available_gas(100000000)]
 fn test_all_mod_ops() {
     let max_u128: u128 = 0xffffffffffffffffffffffffffffffff;
     let add = f::add(a, b, FIELD);

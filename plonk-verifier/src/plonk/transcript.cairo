@@ -1,12 +1,19 @@
+use core::traits::TryInto;
 use core::clone::Clone;
 use core::traits::Into;
-use plonk_verifier::traits::FieldMulShortcuts;
-use core::array::SpanTrait;
-use core::array::ArrayTrait;
 use core::traits::Destruct;
 use core::keccak;
+use core::byte_array::ByteArrayTrait;
+use core::to_byte_array::{FormatAsByteArray, AppendFormattedToByteArray};
+use core::fmt::{Display, Formatter, Error};
+use debug::PrintTrait;
+
+use plonk_verifier::curve::constants::{ORDER, get_order_nz};
 use plonk_verifier::curve::groups::{g1, g2, AffineG1, AffineG2};
-use plonk_verifier::fields::{fq, Fq, fq2, Fq2, FqIntoU256};
+use plonk_verifier::fields::{fq, Fq, FqIntoU256};
+use plonk_verifier::traits::FieldMulShortcuts;
+use plonk_verifier::plonk::utils::{convert_le_to_be, hex_to_decimal, decimal_to_byte_array};
+use plonk_verifier::curve::{mul_nz};
 
 #[derive(Drop)]
 pub struct PlonkTranscript {
@@ -22,7 +29,7 @@ enum TranscriptElement<AffineG1, Fq> {
 #[derive(Drop)]
 trait Keccak256Transcript<T> {
     fn new() -> T;
-    fn add_pol_commitment(ref self: T, polynomial_commitment: AffineG1);
+    fn add_poly_commitment(ref self: T, polynomial_commitment: AffineG1);
     fn add_scalar(ref self: T, scalar: Fq);
     fn get_challenge(self: T) -> Fq;
 }
@@ -32,7 +39,7 @@ impl Transcript of Keccak256Transcript<PlonkTranscript> {
     fn new() -> PlonkTranscript {
         PlonkTranscript { data: ArrayTrait::new() }
     }
-    fn add_pol_commitment(ref self: PlonkTranscript, polynomial_commitment: AffineG1) {
+    fn add_poly_commitment(ref self: PlonkTranscript, polynomial_commitment: AffineG1) {
         self.data.append(TranscriptElement::Polynomial(polynomial_commitment));
     }
 
@@ -45,26 +52,35 @@ impl Transcript of Keccak256Transcript<PlonkTranscript> {
             panic!("Keccak256Transcript: No data to generate a transcript");
         }
 
-        let mut buffer = ArrayTrait::<u256>::new();
-        let mut i = 0;
-        while i < self
-            .data
-            .len() {
-                match self.data.at(i) {
-                    TranscriptElement::Polynomial(pt) => {
-                        let x = pt.x;
-                        let y = pt.y;
-                        buffer.append(FqIntoU256::into(x.clone()));
-                        buffer.append(FqIntoU256::into(y.clone()));
-                    },
-                    TranscriptElement::Scalar(scalar) => {
-                        buffer.append(FqIntoU256::into(scalar.clone()));
-                    },
-                };
-                i += 1;
-            };
+        let mut buffer: ByteArray = "";
 
-        let value = keccak::keccak_u256s_be_inputs(buffer.span());
-        fq(value)
+        let mut i = 0;
+
+        while i < self.data.len() {
+            match self.data.at(i) {
+                TranscriptElement::Polynomial(pt) => {
+                    let x = pt.x.c0.clone();
+                    let y = pt.y.c0.clone();
+                    let mut x_bytes: ByteArray = decimal_to_byte_array(x);
+                    let mut y_bytes: ByteArray = decimal_to_byte_array(y);
+                    buffer.append(@x_bytes);
+                    buffer.append(@y_bytes);
+                },
+                TranscriptElement::Scalar(scalar) => {
+                    let s: u256 = scalar.c0.clone();
+                    let mut s_bytes: ByteArray = decimal_to_byte_array(s);
+                    buffer.append(@s_bytes);
+                },
+            };
+            i += 1;
+        };
+
+        let le_value = keccak::compute_keccak_byte_array(@buffer);
+
+        let be_value = convert_le_to_be(le_value);
+        let be_u256: u256 = hex_to_decimal(be_value);
+        let challenge: Fq = fq(mul_nz(be_u256, 1, get_order_nz()));
+
+        challenge
     }
 }
