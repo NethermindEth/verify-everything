@@ -10,3 +10,5 @@ The initial list of potential verifiers will be as follows:
 2. halo2 (KZG)
 3. Plonky2
 4. Plonk
+
+# This repo will be deprecated soon as our efforts are focused on optimizing the PLONK verifier. Please refer to https://github.com/NethermindEth/cairo-plonk-verifier for the latest details.
