@@ -11,4 +11,5 @@ The initial list of potential verifiers will be as follows:
 3. Plonky2
 4. Plonk
 
-# This repo will be deprecated soon as our efforts are focused on optimizing the PLONK verifier. Please refer to https://github.com/NethermindEth/cairo-plonk-verifier for the latest details.
+# Disclaimer 
+This repo will be deprecated soon as our efforts are focused on optimizing the PLONK verifier. Please refer to https://github.com/NethermindEth/cairo-plonk-verifier for the latest details.
